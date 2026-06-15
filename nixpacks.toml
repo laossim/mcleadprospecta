@@ -1,5 +1,6 @@
 [phases.setup]
 nixPkgs = [
+  "chromium",
   "nss",
   "nspr",
   "atk",
@@ -35,7 +36,7 @@ nixPkgs = [
 cmds = ["pip install -r requirements.txt"]
 
 [phases.build]
-cmds = ["PLAYWRIGHT_BROWSERS_PATH=/app/.playwright playwright install chromium --with-deps"]
+cmds = ["echo 'Usando Chromium do sistema Nix'"]
 
 [start]
-cmd = "PLAYWRIGHT_BROWSERS_PATH=/app/.playwright gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 600 --keep-alive 5"
+cmd = "PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$(which chromium) gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 600 --keep-alive 5"

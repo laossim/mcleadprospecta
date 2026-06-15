@@ -316,9 +316,12 @@ def worker(job_id, cidade, nicho):
     url_maps = f"https://www.google.com/maps/search/{busca.replace(' ', '+')}"
     log(f"Iniciando: {busca}")
 
+    # Usa o Chromium do sistema (Nix) se disponível, caso contrário deixa o Playwright decidir
+    chromium_path = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH") or None
+
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(
+            launch_kwargs = dict(
                 headless=True,
                 args=[
                     "--no-sandbox",
@@ -326,10 +329,14 @@ def worker(job_id, cidade, nicho):
                     "--disable-gpu",
                     "--disable-blink-features=AutomationControlled",
                     "--disable-setuid-sandbox",
-                    "--single-process",          # evita problemas de memória no Railway
+                    "--single-process",
                     "--lang=pt-BR",
                 ]
             )
+            if chromium_path:
+                launch_kwargs["executable_path"] = chromium_path
+
+            browser = p.chromium.launch(**launch_kwargs)
             ctx = browser.new_context(
                 locale="pt-BR",
                 timezone_id="America/Sao_Paulo",

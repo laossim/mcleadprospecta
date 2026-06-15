@@ -1,1 +1,1 @@
-web: PLAYWRIGHT_BROWSERS_PATH=/app/.playwright gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 600 --keep-alive 5
+web: PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$(which chromium) gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 600 --keep-alive 5
