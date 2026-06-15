@@ -1,6 +1,6 @@
 # MCLeadProspecta Web - Memocash Solucoes - github.com/laossim
 
-import os, re, time, uuid, json, threading, unicodedata, shutil
+import os, re, time, uuid, json, threading, unicodedata
 from datetime import date, datetime
 from flask import Flask, render_template, request, jsonify, send_file
 
@@ -9,18 +9,6 @@ app.secret_key = os.environ.get("SECRET_KEY", "mcleadprospecta-dev")
 
 JOBS = {}
 JOBS_LOCK = threading.Lock()
-
-def _achar_chromium():
-    env = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH")
-    if env and os.path.isfile(env):
-        return env
-    for nome in ("chromium", "chromium-browser", "google-chrome", "google-chrome-stable"):
-        caminho = shutil.which(nome)
-        if caminho:
-            return caminho
-    return None
-
-CHROMIUM_PATH = _achar_chromium()
 
 def normalizar(t):
     return unicodedata.normalize("NFKD", t).encode("ASCII", "ignore").decode().lower().strip()
@@ -169,7 +157,7 @@ def salvar_xlsx(resultados, cidade, nicho):
     ws.merge_cells("A2:H2")
     c2 = ws["A2"]
     c2.value = ("Gerado em " + date.today().strftime("%d/%m/%Y") +
-                " - " + str(len(resultados)) + " estabelecimentos - MCLeadProspecta")
+                " - " + str(len(resultados)) + " leads - MCLeadProspecta")
     c2.font = Font(name="Arial", size=9, color="3a7d44", italic=True)
     c2.alignment = Alignment(horizontal="center", vertical="center")
     ws.row_dimensions[2].height = 16
@@ -244,15 +232,15 @@ def worker(job_id, cidade, nicho):
         with JOBS_LOCK: JOBS[job_id]["status"] = "erro"
         return
 
+    pw_path = os.environ.get("PLAYWRIGHT_BROWSERS_PATH", "nao definido")
     busca = nicho + " em " + cidade
     url_maps = "https://www.google.com/maps/search/" + busca.replace(" ", "+")
     log("Iniciando: " + busca)
-    if CHROMIUM_PATH:
-        log("Chromium: " + CHROMIUM_PATH)
+    log("Browsers path: " + pw_path)
 
     try:
         with sync_playwright() as p:
-            launch_kwargs = dict(
+            browser = p.chromium.launch(
                 headless=True,
                 args=[
                     "--no-sandbox",
@@ -264,10 +252,6 @@ def worker(job_id, cidade, nicho):
                     "--lang=pt-BR",
                 ]
             )
-            if CHROMIUM_PATH:
-                launch_kwargs["executable_path"] = CHROMIUM_PATH
-
-            browser = p.chromium.launch(**launch_kwargs)
             ctx = browser.new_context(
                 locale="pt-BR",
                 timezone_id="America/Sao_Paulo",
