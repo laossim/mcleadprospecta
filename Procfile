@@ -1,1 +1,39 @@
-web: PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=$(which chromium) gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 600 --keep-alive 5
+[phases.setup]
+nixPkgs = [
+  "chromium",
+  "nss",
+  "nspr",
+  "atk",
+  "cups",
+  "libdrm",
+  "dbus",
+  "libxkbcommon",
+  "xorg.libX11",
+  "xorg.libXcomposite",
+  "xorg.libXdamage",
+  "xorg.libXext",
+  "xorg.libXfixes",
+  "xorg.libXrandr",
+  "mesa",
+  "expat",
+  "xorg.libxcb",
+  "xorg.libXcursor",
+  "xorg.libXi",
+  "xorg.libXrender",
+  "xorg.libXtst",
+  "pango",
+  "cairo",
+  "alsa-lib",
+  "at-spi2-atk",
+  "at-spi2-core",
+  "glib",
+  "gtk3",
+  "fontconfig",
+  "freetype",
+]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[start]
+cmd = "gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 600 --keep-alive 5"
