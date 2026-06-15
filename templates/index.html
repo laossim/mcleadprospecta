@@ -1,524 +1,247 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MCLeadProspecta — Memocash Soluções</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCLeadProspecta</title>
 <style>
-:root{
-  --bg:        #080f09;
-  --surface:   #0d1a0e;
-  --card:      #111e12;
-  --card2:     #152018;
-  --input-bg:  #192b1a;
-  --border:    #1e3d20;
-  --verde:     #1e8a2e;
-  --verde-lt:  #27ae3f;
-  --verde-dim: #145c1f;
-  --verde-glow:#27ae3f40;
-  --branco:    #e4f0e5;
-  --cinza:     #6a957a;
-  --log:       #7dba85;
-  --accent:    #4ade6a;
-  --danger:    #e05252;
-  --warn:      #f0a04a;
-}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#060d07;color:#cce8cf;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 16px 60px}
 
-*{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
+/* HEADER */
+.header{width:100%;max-width:740px;display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.header svg{flex-shrink:0}
+.header h1{font-size:1.6rem;font-weight:800;color:#34d058;letter-spacing:-.5px}
+.header p{font-size:.75rem;color:#4a7d52;margin-top:2px}
+.header-space{flex:1}
+.gh-link{font-size:.68rem;color:#1e4025;text-decoration:none;transition:color .2s}
+.gh-link:hover{color:#4a7d52}
+.sep{width:100%;max-width:740px;height:1px;background:linear-gradient(90deg,transparent,#1a3d1f,transparent);margin:16px 0 28px}
 
-body{
-  background:var(--bg);
-  color:var(--branco);
-  font-family:'Syne',sans-serif;
-  min-height:100vh;
-  overflow-x:hidden;
-}
+/* CARD */
+.card{background:#0b1a0c;border:1px solid #163320;border-radius:12px;padding:32px;width:100%;max-width:740px;margin-bottom:12px}
 
-/* ── grade de pontos no fundo ── */
-body::before{
-  content:'';
-  position:fixed;inset:0;
-  background-image:radial-gradient(circle,#1e8a2e18 1px,transparent 1px);
-  background-size:32px 32px;
-  pointer-events:none;z-index:0;
-}
-
-/* ── brilho superior ── */
-body::after{
-  content:'';
-  position:fixed;top:-200px;left:50%;transform:translateX(-50%);
-  width:700px;height:400px;
-  background:radial-gradient(ellipse,#1e8a2e22 0%,transparent 70%);
-  pointer-events:none;z-index:0;
-}
-
-.shell{
-  position:relative;z-index:1;
-  max-width:820px;margin:0 auto;padding:48px 24px 80px;
-}
-
-/* ── HEADER ── */
-header{
-  display:flex;align-items:center;gap:20px;margin-bottom:10px;
-}
-
-.logo-wrap{position:relative;flex-shrink:0}
-.logo-wrap svg{filter:drop-shadow(0 0 12px #27ae3f55)}
-
-.brand-block{flex:1}
-.app-name{
-  font-size:clamp(22px,4vw,32px);font-weight:800;letter-spacing:-1px;
-  background:linear-gradient(135deg,#4ade6a,#1e8a2e);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-  background-clip:text;line-height:1;
-}
-.brand-row{display:flex;align-items:center;gap:10px;margin-top:6px}
-.brand-sub{font-size:12px;color:var(--cinza);letter-spacing:.5px}
-.badge{
-  font-size:9px;font-weight:700;letter-spacing:.8px;
-  background:#3d0e0e;color:#ff7070;
-  border:1px solid #5a1a1a;
-  padding:2px 8px;border-radius:4px;text-transform:uppercase;
-}
-
-/* dev link — canto, discreto */
-.dev-link{
-  position:fixed;bottom:14px;right:16px;z-index:99;
-  font-family:'JetBrains Mono',monospace;
-  font-size:9px;color:var(--verde-dim);
-  text-decoration:none;opacity:.5;
-  transition:opacity .2s,color .2s;
-}
-.dev-link:hover{opacity:1;color:var(--cinza)}
-
-/* ── DIVISOR ── */
-.divider{
-  height:1px;
-  background:linear-gradient(90deg,transparent,var(--verde),transparent);
-  margin:20px 0 32px;
-}
-
-/* ── CARD ── */
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:14px;
-  padding:28px 32px;
-  margin-bottom:16px;
-  position:relative;overflow:hidden;
-}
-.card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--verde-lt),transparent);
-}
-
-/* ── CAMPOS ── */
-.fields{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+/* FIELDS */
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:6px}
 @media(max-width:540px){.fields{grid-template-columns:1fr}}
+.field label{display:block;font-size:.65rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#3d7044;margin-bottom:7px}
+.field input{width:100%;background:#0f2011;border:none;border-bottom:2px solid #1a3d20;color:#cce8cf;font-size:1.05rem;padding:11px 14px;outline:none;border-radius:6px 6px 0 0;transition:border-color .2s}
+.field input:focus{border-bottom-color:#34d058}
+.field input::placeholder{color:#2a5030;opacity:.8}
 
-.field-group{display:flex;flex-direction:column;gap:6px}
-.field-label{
-  font-size:10px;font-weight:600;letter-spacing:1.2px;
-  text-transform:uppercase;color:var(--cinza);
-}
-.field-input{
-  background:var(--input-bg);
-  border:1px solid var(--border);
-  border-bottom:2px solid var(--verde);
-  color:var(--branco);
-  font-family:'Syne',sans-serif;font-size:15px;
-  padding:12px 14px;border-radius:8px 8px 0 0;
-  outline:none;transition:border-color .2s,box-shadow .2s;
-  width:100%;
-}
-.field-input:focus{
-  border-color:var(--verde-lt);
-  box-shadow:0 0 0 3px var(--verde-glow);
-}
-.field-input::placeholder{color:var(--cinza);opacity:.5}
+.hint{font-size:.72rem;color:#34d058;min-height:20px;margin:8px 0 20px;font-style:italic;padding-left:2px}
 
-.corr-msg{
-  font-size:10px;color:var(--accent);
-  font-family:'JetBrains Mono',monospace;
-  min-height:18px;margin-top:10px;letter-spacing:.3px;
-}
+/* BTN */
+#btn{width:100%;padding:15px;background:#1e8a2e;color:#fff;font-size:.95rem;font-weight:700;letter-spacing:.4px;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s}
+#btn:hover:not(:disabled){background:#25a838}
+#btn:disabled{opacity:.45;cursor:not-allowed}
+.dot{width:8px;height:8px;border-radius:50%;background:#fff;display:none;animation:blink 1s infinite}
+#btn.busy .dot{display:block}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(.5)}}
 
-/* ── BOTÃO ── */
-.btn-main{
-  width:100%;margin-top:20px;
-  background:linear-gradient(135deg,var(--verde-lt),var(--verde));
-  color:#fff;border:none;
-  font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
-  letter-spacing:.8px;text-transform:uppercase;
-  padding:16px;border-radius:10px;cursor:pointer;
-  position:relative;overflow:hidden;
-  transition:transform .15s,box-shadow .15s;
-  box-shadow:0 4px 24px #1e8a2e44;
-}
-.btn-main::after{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(135deg,#ffffff18,transparent);
-}
-.btn-main:hover:not(:disabled){
-  transform:translateY(-2px);
-  box-shadow:0 8px 32px #27ae3f55;
-}
-.btn-main:active:not(:disabled){transform:translateY(0)}
-.btn-main:disabled{
-  background:var(--verde-dim);cursor:not-allowed;
-  box-shadow:none;transform:none;opacity:.7;
-}
+/* PROGRESS */
+.pbar-wrap{margin-top:14px;background:#0f2011;border-radius:99px;height:4px;overflow:hidden}
+#pbar{height:100%;width:0%;background:linear-gradient(90deg,#1e8a2e,#34d058);border-radius:99px;transition:width .5s ease}
 
-/* ── PROGRESSO ── */
-.prog-wrap{
-  background:var(--input-bg);border-radius:6px;
-  height:6px;margin-top:16px;overflow:hidden;
-}
-.prog-bar{
-  height:100%;width:0%;
-  background:linear-gradient(90deg,var(--verde),var(--accent));
-  border-radius:6px;
-  transition:width .4s ease;
-  box-shadow:0 0 8px var(--accent);
-}
+/* ERRO / DOWNLOAD */
+#erro{display:none;margin-top:12px;font-size:.8rem;color:#e05252;text-align:center}
+#dl{display:none;margin-top:14px;text-align:center}
+#dl a{display:inline-block;background:#0f2011;color:#34d058;border:1px solid #1a3d20;border-radius:8px;padding:10px 28px;font-size:.85rem;font-weight:600;text-decoration:none;transition:background .2s}
+#dl a:hover{background:#163320}
 
-/* ── CORPO INFERIOR: log + histórico ── */
-.body-grid{
-  display:grid;grid-template-columns:1fr 220px;gap:16px;
-  margin-top:16px;
-}
-@media(max-width:640px){.body-grid{grid-template-columns:1fr}}
+/* GRID */
+.grid{display:grid;grid-template-columns:1fr 260px;gap:12px;width:100%;max-width:740px}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+.panel{background:#0b1a0c;border:1px solid #163320;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.panel-head{padding:9px 16px;border-bottom:1px solid #163320;font-size:.62rem;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:#3d7044;display:flex;align-items:center;justify-content:space-between}
+.panel-head button{background:none;border:none;color:#1e4025;cursor:pointer;font-size:.68rem;transition:color .2s}
+.panel-head button:hover{color:#3d7044}
 
-/* ── LOG ── */
-.log-card{
-  background:var(--card);border:1px solid var(--border);
-  border-radius:14px;overflow:hidden;
-}
-.log-head{
-  padding:10px 16px;border-bottom:1px solid var(--border);
-  font-size:10px;font-weight:700;letter-spacing:1px;
-  text-transform:uppercase;color:var(--cinza);
-  display:flex;align-items:center;gap:8px;
-}
-.dot-live{
-  width:7px;height:7px;border-radius:50%;
-  background:var(--danger);
-  box-shadow:0 0 6px var(--danger);
-  display:none;
-}
-.dot-live.on{display:block;animation:pulse 1.2s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* LOG */
+#log{flex:1;padding:14px;font-family:'Cascadia Code','Consolas',monospace;font-size:.72rem;color:#4dbb5a;background:#080f09;overflow-y:auto;min-height:160px;max-height:240px;white-space:pre-wrap;word-break:break-word;line-height:1.65}
 
-#log-area{
-  font-family:'JetBrains Mono',monospace;font-size:10px;
-  color:var(--log);line-height:1.9;
-  padding:14px 16px;height:220px;overflow-y:auto;
-  scrollbar-width:thin;scrollbar-color:var(--border) transparent;
-}
+/* HIST */
+#hist{flex:1;overflow-y:auto;max-height:240px}
+.hi{padding:10px 14px;border-bottom:1px solid #0f1f10;cursor:pointer;transition:background .15s}
+.hi:last-child{border:none}
+.hi:hover{background:#0f2011}
+.hi-cidade{font-size:.85rem;font-weight:600;color:#cce8cf}
+.hi-nicho{font-size:.73rem;color:#3d7044;margin-top:2px}
+.hi-foot{display:flex;align-items:center;justify-content:space-between;margin-top:5px}
+.hi-data{font-size:.65rem;color:#2a5030}
+.badge{font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:uppercase}
+.b-ok{background:#0b2e10;color:#34d058}
+.b-run{background:#142808;color:#86efac}
+.b-err{background:#2e0b0b;color:#f87171}
+.hi-empty{padding:24px;text-align:center;font-size:.77rem;color:#1e4025;font-style:italic}
 
-/* ── HISTÓRICO ── */
-.hist-card{
-  background:var(--card2);border:1px solid var(--border);
-  border-radius:14px;overflow:hidden;
-  display:flex;flex-direction:column;
-}
-.hist-head{
-  padding:10px 14px;border-bottom:1px solid var(--border);
-  font-size:10px;font-weight:700;letter-spacing:1px;
-  text-transform:uppercase;color:var(--cinza);
-}
-#hist-list{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
-.hist-item{
-  padding:10px 14px;border-bottom:1px solid #0d1a0e;
-  cursor:pointer;transition:background .15s;
-}
-.hist-item:hover{background:var(--input-bg)}
-.hist-cidade{font-size:11px;font-weight:700;color:var(--branco)}
-.hist-nicho{font-size:10px;color:var(--cinza);margin-top:2px}
-.hist-meta{
-  display:flex;justify-content:space-between;
-  font-size:9px;color:var(--verde-dim);margin-top:4px;
-  font-family:'JetBrains Mono',monospace;
-}
-.hist-badge{
-  font-size:8px;padding:2px 6px;border-radius:3px;font-weight:700;
-}
-.status-concluido{background:#0d3b1a;color:#4ade6a}
-.status-rodando{background:#1a2e0d;color:var(--warn)}
-.status-erro{background:#3d0e0e;color:var(--danger)}
-.hist-empty{padding:20px 14px;font-size:10px;color:var(--verde-dim);text-align:center;font-family:'JetBrains Mono',monospace}
-
-/* ── DOWNLOAD ── */
-.dl-wrap{
-  display:none;margin-top:16px;
-  background:linear-gradient(135deg,#0d3b1a,#0a2e12);
-  border:1px solid var(--verde);border-radius:12px;
-  padding:18px 24px;
-  align-items:center;justify-content:space-between;gap:16px;
-}
-.dl-wrap.show{display:flex}
-.dl-info{font-size:12px;color:var(--accent)}
-.dl-info small{display:block;color:var(--cinza);font-size:10px;margin-top:3px}
-.btn-dl{
-  background:var(--verde);color:#fff;border:none;
-  font-family:'Syne',sans-serif;font-size:12px;font-weight:700;
-  padding:10px 20px;border-radius:8px;cursor:pointer;
-  white-space:nowrap;transition:background .15s;
-}
-.btn-dl:hover{background:var(--verde-lt)}
-
-/* ── STATUS BADGE ── */
-.status-line{
-  font-size:10px;font-family:'JetBrains Mono',monospace;
-  margin-top:10px;color:var(--cinza);text-align:center;min-height:16px;
-}
+footer{margin-top:28px;font-size:.65rem;color:#1a3d20;text-align:center}
 </style>
 </head>
 <body>
 
-<div class="shell">
-
-  <!-- HEADER -->
-  <header>
-    <div class="logo-wrap">
-      <svg width="64" height="64" viewBox="0 0 64 64">
-        <polygon points="32,3 58,18 58,46 32,61 6,46 6,18"
-                 fill="#1e8a2e" stroke="#27ae3f" stroke-width="1.5"/>
-        <polyline points="16,47 16,21 32,36 48,21 48,47"
-                  fill="none" stroke="white" stroke-width="6.5"
-                  stroke-linejoin="round" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <div class="brand-block">
-      <div class="app-name">MCLeadProspecta</div>
-      <div class="brand-row">
-        <span class="brand-sub">Memocash Soluções</span>
-        <span class="badge">pré-beta v0.0.0.1</span>
-      </div>
-    </div>
-  </header>
-
-  <div class="divider"></div>
-
-  <!-- FORMULÁRIO -->
-  <div class="card">
-    <div class="fields">
-      <div class="field-group">
-        <label class="field-label" for="cidade">Cidade</label>
-        <input class="field-input" id="cidade" placeholder="ex: São Paulo, Curitiba..."
-               autocomplete="off" spellcheck="false"/>
-      </div>
-      <div class="field-group">
-        <label class="field-label" for="nicho">Nicho</label>
-        <input class="field-input" id="nicho" placeholder="ex: pizzaria, barbearia..."
-               autocomplete="off" spellcheck="false"/>
-      </div>
-    </div>
-
-    <div class="corr-msg" id="corr-msg"></div>
-
-    <button class="btn-main" id="btn-gerar" onclick="iniciar()">
-      ▶ &nbsp; Gerar Leads
-    </button>
-
-    <div class="prog-wrap"><div class="prog-bar" id="prog-bar"></div></div>
-    <div class="status-line" id="status-line"></div>
+<div class="header">
+  <svg width="38" height="38" viewBox="0 0 48 48">
+    <polygon points="24,2 44,13 44,35 24,46 4,35 4,13" fill="#1e8a2e" stroke="#34d058" stroke-width="1.5"/>
+    <polyline points="12,36 12,16 24,26 36,16 36,36" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div>
+    <h1>MCLeadProspecta</h1>
+    <p>Memocash Solucoes</p>
   </div>
+  <div class="header-space"></div>
+  <a class="gh-link" href="https://github.com/laossim" target="_blank">@laossim</a>
+</div>
 
-  <!-- DOWNLOAD -->
-  <div class="dl-wrap" id="dl-wrap">
-    <div class="dl-info">
-      <span>✅ Planilha pronta!</span>
-      <small id="dl-nome">—</small>
+<div class="sep"></div>
+
+<div class="card">
+  <div class="fields">
+    <div class="field">
+      <label>Cidade</label>
+      <input id="iCidade" type="text" placeholder="ex: Sao Paulo, Curitiba" autocomplete="off">
     </div>
-    <button class="btn-dl" id="btn-dl">⬇ Baixar Excel</button>
-  </div>
-
-  <!-- LOG + HISTÓRICO -->
-  <div class="body-grid">
-    <div class="log-card">
-      <div class="log-head">
-        <div class="dot-live" id="dot-live"></div>
-        Log em tempo real
-      </div>
-      <div id="log-area"></div>
-    </div>
-
-    <div class="hist-card">
-      <div class="hist-head">Histórico</div>
-      <div id="hist-list"><div class="hist-empty">Nenhuma busca ainda</div></div>
+    <div class="field">
+      <label>Nicho</label>
+      <input id="iNicho" type="text" placeholder="ex: pizzaria, barbearia" autocomplete="off">
     </div>
   </div>
 
-</div><!-- /shell -->
+  <div class="hint" id="hint"></div>
 
-<!-- dev credit — discreto, canto inferior direito -->
-<a class="dev-link" href="https://github.com/laossim" target="_blank" rel="noopener">
-  @laossim
-</a>
+  <button id="btn" onclick="iniciar()">
+    <span class="dot"></span>
+    <span id="btnTxt">Gerar Leads</span>
+  </button>
+
+  <div class="pbar-wrap"><div id="pbar"></div></div>
+  <div id="erro"></div>
+  <div id="dl"><a id="dlLink" href="#">Baixar Planilha</a></div>
+</div>
+
+<div class="grid">
+  <div class="panel">
+    <div class="panel-head">Log em tempo real</div>
+    <div id="log">Aguardando...</div>
+  </div>
+  <div class="panel">
+    <div class="panel-head">
+      Historico
+      <button onclick="limpar()">limpar</button>
+    </div>
+    <div id="hist"><div class="hi-empty">nenhuma busca ainda</div></div>
+  </div>
+</div>
+
+<footer>MCLeadProspecta &middot; Memocash Solucoes &middot; github.com/laossim</footer>
 
 <script>
-let currentJob = null;
-let pollInterval = null;
-let logIndex = 0;
+let jobId=null, poll=null;
+let hist=JSON.parse(localStorage.getItem('mch')||'[]');
 
-const btn     = document.getElementById('btn-gerar');
-const prog    = document.getElementById('prog-bar');
-const statusL = document.getElementById('status-line');
-const logArea = document.getElementById('log-area');
-const dlWrap  = document.getElementById('dl-wrap');
-const dlNome  = document.getElementById('dl-nome');
-const btnDl   = document.getElementById('btn-dl');
-const corrMsg = document.getElementById('corr-msg');
-const dot     = document.getElementById('dot-live');
-
-// Enter navega entre campos
-document.getElementById('cidade').addEventListener('keydown', e => {
-  if(e.key==='Enter'){ e.preventDefault(); document.getElementById('nicho').focus(); }
+document.getElementById('iCidade').addEventListener('keydown',e=>{
+  if(e.key==='Enter'||e.key==='Tab'){e.preventDefault();document.getElementById('iNicho').focus()}
 });
-document.getElementById('nicho').addEventListener('keydown', e => {
-  if(e.key==='Enter'){ e.preventDefault(); iniciar(); }
+document.getElementById('iNicho').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();iniciar()}
 });
 
-// auto-correção ao sair do campo
-['cidade','nicho'].forEach(id => {
-  document.getElementById(id).addEventListener('blur', async () => {
-    const cidade = document.getElementById('cidade').value.trim();
-    const nicho  = document.getElementById('nicho').value.trim();
-    if(!cidade && !nicho) return;
-    const res = await fetch('/corrigir',{method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({cidade,nicho})});
-    const d = await res.json();
+async function corrigir(){
+  const c=document.getElementById('iCidade').value.trim();
+  const n=document.getElementById('iNicho').value.trim();
+  if(!c&&!n)return;
+  try{
+    const r=await fetch('/corrigir',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cidade:c,nicho:n})});
+    const d=await r.json();
     const msgs=[];
-    if(cidade && d.cidade!==cidade){
-      document.getElementById('cidade').value=d.cidade;
-      msgs.push(`Cidade: "${cidade}" → "${d.cidade}"`);
-    }
-    if(nicho && d.nicho!==nicho){
-      document.getElementById('nicho').value=d.nicho;
-      msgs.push(`Nicho: "${nicho}" → "${d.nicho}"`);
-    }
-    corrMsg.textContent = msgs.length ? '✔ Corrigido: '+msgs.join('   |   ') : '';
-  });
-});
-
-function appendLog(lines){
-  lines.forEach(l => {
-    const span=document.createElement('span');
-    span.textContent=l;
-    logArea.appendChild(span);
-  });
-  logArea.scrollTop=logArea.scrollHeight;
+    if(d.cidade!==c){document.getElementById('iCidade').value=d.cidade;msgs.push('Cidade: '+d.cidade)}
+    if(d.nicho!==n){document.getElementById('iNicho').value=d.nicho;msgs.push('Nicho: '+d.nicho)}
+    document.getElementById('hint').textContent=msgs.length?'Corrigido: '+msgs.join(' / '):'';
+  }catch(e){}
 }
-
-function setStatus(txt,cor){
-  statusL.textContent=txt;
-  statusL.style.color=cor||'var(--cinza)';
-}
+document.getElementById('iCidade').addEventListener('blur',corrigir);
+document.getElementById('iNicho').addEventListener('blur',corrigir);
 
 async function iniciar(){
-  const cidade=document.getElementById('cidade').value.trim();
-  const nicho =document.getElementById('nicho').value.trim();
-  if(!cidade||!nicho){ setStatus('⚠ Preencha cidade e nicho.','var(--warn)'); return; }
-
-  btn.disabled=true; btn.textContent='⏳  Processando...';
-  prog.style.width='0%';
-  logArea.innerHTML=''; logIndex=0;
-  dlWrap.classList.remove('show');
-  corrMsg.textContent='';
-  dot.classList.add('on');
-  setStatus('Iniciando...','var(--cinza)');
-
-  const res = await fetch('/iniciar',{method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({cidade,nicho})});
-  const d = await res.json();
-  if(d.erro){ setStatus('❌ '+d.erro,'var(--danger)'); resetBtn(); return; }
-
-  currentJob=d.job_id;
-  if(d.cidade!==cidade || d.nicho!==nicho){
-    corrMsg.textContent=`✔ Corrigido: Cidade "${cidade}" → "${d.cidade}"  |  Nicho "${nicho}" → "${d.nicho}"`;
-  }
-
-  pollInterval=setInterval(poll,900);
-  carregarHistorico();
-}
-
-async function poll(){
-  if(!currentJob) return;
+  const c=document.getElementById('iCidade').value.trim();
+  const n=document.getElementById('iNicho').value.trim();
+  if(!c||!n){setErro('Preencha cidade e nicho.');return}
+  await corrigir();
+  const cf=document.getElementById('iCidade').value.trim();
+  const nf=document.getElementById('iNicho').value.trim();
+  setBusy(true);setLog('Iniciando...');setErro('');setDl(false);setProg(0);
   try{
-    const res=await fetch(`/status/${currentJob}`);
-    const d=await res.json();
+    const r=await fetch('/iniciar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cidade:cf,nicho:nf})});
+    const d=await r.json();
+    if(d.erro){setErro(d.erro);setBusy(false);return}
+    jobId=d.job_id;
+    addHist(cf,nf,jobId);
+    poll=setInterval(polling,2000);
+  }catch(e){setErro('Erro de conexao.');setBusy(false)}
+}
 
-    // novos logs
-    if(d.log && d.log.length>logIndex){
-      appendLog(d.log.slice(logIndex));
-      logIndex=d.log.length;
-    }
-
-    prog.style.width=d.progress+'%';
-
+async function polling(){
+  if(!jobId)return;
+  try{
+    const r=await fetch('/status/'+jobId);
+    const d=await r.json();
+    if(d.log&&d.log.length)setLog(d.log.join('\n'));
+    if(d.progress)setProg(d.progress);
     if(d.status==='concluido'){
-      clearInterval(pollInterval);
-      dot.classList.remove('on');
-      setStatus(`✅ ${d.total} leads gerados!`,'var(--accent)');
-      btn.disabled=false; btn.textContent='▶  Nova Busca';
-      dlNome.textContent=d.file_name;
-      btnDl.onclick=()=>{ window.location.href=`/download/${currentJob}`; };
-      dlWrap.classList.add('show');
-      carregarHistorico();
-    } else if(d.status==='erro'){
-      clearInterval(pollInterval);
-      dot.classList.remove('on');
-      setStatus('❌ Erro durante a coleta.','var(--danger)');
-      resetBtn();
-    } else {
-      setStatus(`⏳ ${d.progress}% concluído — ${d.total||'?'} locais encontrados`,'var(--cinza)');
+      clearInterval(poll);setBusy(false);setProg(100);setDl(true,jobId);
+      updHist(jobId,'ok');renderHist();
     }
-  }catch(e){ /* ignora falhas de rede pontuais */ }
+    if(d.status==='erro'){
+      clearInterval(poll);setBusy(false);setErro('Erro durante a coleta.');
+      updHist(jobId,'err');renderHist();
+    }
+  }catch(e){}
 }
 
-function resetBtn(){
-  btn.disabled=false; btn.textContent='▶  Gerar Leads';
-  dot.classList.remove('on');
+function setBusy(v){
+  const b=document.getElementById('btn');
+  document.getElementById('btnTxt').textContent=v?'Processando...':'Gerar Leads';
+  b.disabled=v;b.classList.toggle('busy',v);
+}
+function setLog(t){const el=document.getElementById('log');el.textContent=t;el.scrollTop=el.scrollHeight}
+function setProg(v){document.getElementById('pbar').style.width=v+'%'}
+function setErro(m){const el=document.getElementById('erro');el.textContent=m?'x '+m:'';el.style.display=m?'block':'none'}
+function setDl(v,jid){
+  document.getElementById('dl').style.display=v?'block':'none';
+  if(jid)document.getElementById('dlLink').href='/download/'+jid;
 }
 
-async function carregarHistorico(){
-  const res  = await fetch('/historico');
-  const hist = await res.json();
-  const ul   = document.getElementById('hist-list');
-  if(!hist.length){
-    ul.innerHTML='<div class="hist-empty">Nenhuma busca ainda</div>';
-    return;
-  }
-  ul.innerHTML=hist.map(h=>{
-    const st = h.status==='concluido'
-      ? `<span class="hist-badge status-concluido">${h.total} leads</span>`
-      : h.status==='erro'
-      ? `<span class="hist-badge status-erro">erro</span>`
-      : `<span class="hist-badge status-rodando">rodando</span>`;
-    const dt = h.criado_em.slice(0,16).replace('T',' ');
-    return `<div class="hist-item" onclick="reusarBusca('${h.cidade}','${h.nicho}')">
-      <div class="hist-cidade">${h.cidade}</div>
-      <div class="hist-nicho">${h.nicho}</div>
-      <div class="hist-meta"><span>${dt}</span>${st}</div>
-    </div>`;
-  }).join('');
+function addHist(c,n,jid){
+  hist=hist.filter(h=>!(h.c===c&&h.n===n));
+  hist.unshift({c,n,jid,s:'run',d:new Date().toLocaleDateString('pt-BR')});
+  if(hist.length>20)hist.pop();
+  localStorage.setItem('mch',JSON.stringify(hist));
+  renderHist();
 }
-
-function reusarBusca(cidade,nicho){
-  document.getElementById('cidade').value=cidade;
-  document.getElementById('nicho').value=nicho;
-  corrMsg.textContent='';
-  document.getElementById('cidade').focus();
+function updHist(jid,s){
+  const h=hist.find(x=>x.jid===jid);
+  if(h){h.s=s;localStorage.setItem('mch',JSON.stringify(hist))}
 }
-
-// carrega histórico ao abrir
-carregarHistorico();
+function limpar(){hist=[];localStorage.setItem('mch','[]');renderHist()}
+function renderHist(){
+  const el=document.getElementById('hist');
+  if(!hist.length){el.innerHTML='<div class="hi-empty">nenhuma busca ainda</div>';return}
+  el.innerHTML=hist.map(h=>`
+    <div class="hi" onclick="preencher('${h.c}','${h.n}')">
+      <div class="hi-cidade">${h.c}</div>
+      <div class="hi-nicho">${h.n}</div>
+      <div class="hi-foot">
+        <span class="hi-data">${h.d||''}</span>
+        <span class="badge ${h.s==='ok'?'b-ok':h.s==='err'?'b-err':'b-run'}">${h.s==='ok'?'ok':h.s==='err'?'erro':'rodando'}</span>
+      </div>
+    </div>`).join('');
+}
+function preencher(c,n){
+  document.getElementById('iCidade').value=c;
+  document.getElementById('iNicho').value=n;
+  document.getElementById('hint').textContent='';
+}
+renderHist();
 </script>
 </body>
 </html>
