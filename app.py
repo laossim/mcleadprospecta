@@ -1,566 +1,419 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MCLeadProspecta — Memocash</title>
-<style>
-  :root {
-    --bg:       #080f09;
-    --surface:  #0f1a10;
-    --card:     #121f13;
-    --border:   #1a3320;
-    --green:    #22a83a;
-    --green-hi: #2ecc52;
-    --green-lo: #0f4f1c;
-    --green-dim:#164022;
-    --text:     #d4edd8;
-    --muted:    #5a8f63;
-    --log:      #6fcf7c;
-    --danger:   #e05252;
-    --radius:   10px;
-  }
+# MCLeadProspecta Web - Memocash Solucoes - github.com/laossim
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+import os, re, time, uuid, json, threading, unicodedata, shutil
+from datetime import date, datetime
+from flask import Flask, render_template, request, jsonify, send_file
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Segoe UI', system-ui, sans-serif;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 32px 16px 48px;
-  }
+app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", "mcleadprospecta-dev")
 
-  /* ── HEADER ── */
-  header {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 32px;
-    width: 100%;
-    max-width: 780px;
-  }
+JOBS = {}
+JOBS_LOCK = threading.Lock()
 
-  .logo-hex {
-    width: 42px; height: 42px; flex-shrink: 0;
-  }
+def _achar_chromium():
+    env = os.environ.get("PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH")
+    if env and os.path.isfile(env):
+        return env
+    for nome in ("chromium", "chromium-browser", "google-chrome", "google-chrome-stable"):
+        caminho = shutil.which(nome)
+        if caminho:
+            return caminho
+    return None
 
-  .header-text h1 {
-    font-size: 1.55rem;
-    font-weight: 700;
-    color: var(--green-hi);
-    letter-spacing: -0.3px;
-    line-height: 1;
-  }
+CHROMIUM_PATH = _achar_chromium()
 
-  .header-text p {
-    font-size: 0.78rem;
-    color: var(--muted);
-    margin-top: 3px;
-  }
+def normalizar(t):
+    return unicodedata.normalize("NFKD", t).encode("ASCII", "ignore").decode().lower().strip()
 
-  .header-spacer { flex: 1; }
-
-  .badge-github {
-    font-size: 0.7rem;
-    color: var(--green-lo);
-    text-decoration: none;
-    transition: color .2s;
-  }
-  .badge-github:hover { color: var(--muted); }
-
-  /* ── DIVIDER ── */
-  .divider {
-    width: 100%; max-width: 780px;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, var(--green-lo), transparent);
-    margin-bottom: 28px;
-  }
-
-  /* ── MAIN CARD ── */
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 28px 28px 24px;
-    width: 100%; max-width: 780px;
-    margin-bottom: 14px;
-  }
-
-  /* ── INPUTS ── */
-  .fields {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-bottom: 20px;
-  }
-
-  @media (max-width: 560px) {
-    .fields { grid-template-columns: 1fr; }
-  }
-
-  .field label {
-    display: block;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    color: var(--muted);
-    text-transform: uppercase;
-    margin-bottom: 6px;
-  }
-
-  .field input {
-    width: 100%;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-bottom: 2px solid var(--green-lo);
-    border-radius: 6px 6px 0 0;
-    color: var(--text);
-    font-size: 1rem;
-    padding: 10px 14px;
-    outline: none;
-    transition: border-color .2s, box-shadow .2s;
-  }
-
-  .field input:focus {
-    border-bottom-color: var(--green);
-    box-shadow: 0 2px 0 0 var(--green);
-  }
-
-  .field input::placeholder { color: var(--muted); opacity: .5; }
-
-  /* autocorrect hint */
-  .hint {
-    font-size: 0.72rem;
-    color: var(--green-hi);
-    min-height: 18px;
-    margin-top: 6px;
-    font-style: italic;
-  }
-
-  /* ── BOTÃO ── */
-  #btnGerar {
-    width: 100%;
-    padding: 14px;
-    background: var(--green);
-    color: #fff;
-    font-size: 0.95rem;
-    font-weight: 700;
-    letter-spacing: .5px;
-    border: none;
-    border-radius: var(--radius);
-    cursor: pointer;
-    transition: background .2s, transform .1s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-  #btnGerar:hover:not(:disabled) { background: var(--green-hi); }
-  #btnGerar:active:not(:disabled) { transform: scale(.99); }
-  #btnGerar:disabled { opacity: .5; cursor: not-allowed; }
-
-  /* pulse dot enquanto roda */
-  .pulse {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: #fff;
-    animation: pulse 1s infinite;
-    display: none;
-  }
-  #btnGerar.running .pulse { display: block; }
-  @keyframes pulse {
-    0%,100% { opacity: 1; transform: scale(1); }
-    50%      { opacity: .3; transform: scale(.6); }
-  }
-
-  /* ── PROGRESSO ── */
-  .progress-wrap {
-    margin-top: 14px;
-    background: var(--surface);
-    border-radius: 99px;
-    height: 5px;
-    overflow: hidden;
-  }
-  #progressBar {
-    height: 100%;
-    width: 0%;
-    background: linear-gradient(90deg, var(--green), var(--green-hi));
-    border-radius: 99px;
-    transition: width .4s ease;
-  }
-
-  /* erro inline */
-  #msgErro {
-    display: none;
-    margin-top: 12px;
-    font-size: 0.82rem;
-    color: var(--danger);
-    text-align: center;
-  }
-
-  /* ── GRID INFERIOR ── */
-  .bottom-grid {
-    display: grid;
-    grid-template-columns: 1fr 280px;
-    gap: 14px;
-    width: 100%;
-    max-width: 780px;
-  }
-
-  @media (max-width: 640px) {
-    .bottom-grid { grid-template-columns: 1fr; }
-  }
-
-  .panel {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .panel-head {
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.67rem;
-    font-weight: 700;
-    letter-spacing: 1.2px;
-    color: var(--muted);
-    text-transform: uppercase;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  /* ── LOG ── */
-  #logBox {
-    flex: 1;
-    padding: 12px 14px;
-    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
-    font-size: 0.73rem;
-    color: var(--log);
-    background: var(--surface);
-    overflow-y: auto;
-    min-height: 180px;
-    max-height: 260px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    line-height: 1.6;
-  }
-
-  /* ── HISTÓRICO ── */
-  #histLista { flex: 1; overflow-y: auto; max-height: 260px; }
-
-  .hist-item {
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background .15s;
-  }
-  .hist-item:last-child { border-bottom: none; }
-  .hist-item:hover { background: var(--green-dim); }
-
-  .hist-cidade {
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: var(--text);
-    line-height: 1.2;
-  }
-  .hist-nicho {
-    font-size: 0.75rem;
-    color: var(--muted);
-    margin-top: 2px;
-  }
-  .hist-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 5px;
-  }
-  .hist-data { font-size: 0.68rem; color: var(--muted); }
-
-  .badge {
-    font-size: 0.65rem;
-    font-weight: 700;
-    padding: 2px 7px;
-    border-radius: 99px;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-  }
-  .badge-ok      { background: #0f4f1c; color: var(--green-hi); }
-  .badge-running { background: #1a3a0a; color: #a3e635; }
-  .badge-erro    { background: #4a1010; color: #f87171; }
-
-  .hist-empty {
-    padding: 24px 14px;
-    text-align: center;
-    font-size: 0.78rem;
-    color: var(--muted);
-    font-style: italic;
-  }
-
-  /* download inline */
-  #downloadWrap {
-    display: none;
-    margin-top: 12px;
-    text-align: center;
-  }
-  #downloadWrap a {
-    display: inline-block;
-    background: var(--green-dim);
-    color: var(--green-hi);
-    border: 1px solid var(--green-lo);
-    border-radius: 8px;
-    padding: 10px 24px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background .2s;
-  }
-  #downloadWrap a:hover { background: var(--green-lo); }
-
-  /* ── FOOTER ── */
-  footer {
-    margin-top: 28px;
-    font-size: 0.68rem;
-    color: var(--green-lo);
-    text-align: center;
-  }
-</style>
-</head>
-<body>
-
-<!-- HEADER -->
-<header>
-  <svg class="logo-hex" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-    <polygon points="24,2 44,13 44,35 24,46 4,35 4,13" fill="#22a83a" stroke="#2ecc52" stroke-width="1.5"/>
-    <polyline points="11,36 11,16 24,25 37,16 37,36" fill="none" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
-  <div class="header-text">
-    <h1>MCLeadProspecta</h1>
-    <p>Memocash Soluções</p>
-  </div>
-  <div class="header-spacer"></div>
-  <a class="badge-github" href="https://github.com/laossim" target="_blank" rel="noopener">@laossim</a>
-</header>
-
-<div class="divider"></div>
-
-<!-- CARD PRINCIPAL -->
-<div class="card">
-  <div class="fields">
-    <div class="field">
-      <label>Cidade</label>
-      <input id="inCidade" type="text" placeholder="ex: São Paulo, Curitiba…" autocomplete="off">
-    </div>
-    <div class="field">
-      <label>Nicho</label>
-      <input id="inNicho" type="text" placeholder="ex: pizzaria, barbearia…" autocomplete="off">
-    </div>
-  </div>
-
-  <div class="hint" id="hintCorr"></div>
-
-  <button id="btnGerar" onclick="iniciar()">
-    <span class="pulse"></span>
-    <span id="btnTxt">▶ Gerar Leads</span>
-  </button>
-
-  <div class="progress-wrap" style="margin-top:12px">
-    <div id="progressBar"></div>
-  </div>
-
-  <div id="msgErro"></div>
-  <div id="downloadWrap"><a id="downloadLink" href="#">⬇ Baixar Planilha</a></div>
-</div>
-
-<!-- GRID INFERIOR -->
-<div class="bottom-grid">
-  <div class="panel">
-    <div class="panel-head">Log em tempo real</div>
-    <div id="logBox">Aguardando início…</div>
-  </div>
-
-  <div class="panel">
-    <div class="panel-head">
-      Histórico
-      <button onclick="limparHist()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.7rem">limpar</button>
-    </div>
-    <div id="histLista"><div class="hist-empty">nenhuma busca ainda</div></div>
-  </div>
-</div>
-
-<footer>MCLeadProspecta · Memocash Soluções · github.com/laossim</footer>
-
-<script>
-let jobAtual   = null;
-let pollingInt = null;
-let histLocal  = JSON.parse(localStorage.getItem('mc_hist') || '[]');
-
-// ── Navegação Enter/Tab ───────────────────────────────────────────────────────
-document.getElementById('inCidade').addEventListener('keydown', e => {
-  if (e.key === 'Enter' || e.key === 'Tab') {
-    e.preventDefault();
-    document.getElementById('inNicho').focus();
-  }
-});
-document.getElementById('inNicho').addEventListener('keydown', e => {
-  if (e.key === 'Enter') { e.preventDefault(); iniciar(); }
-});
-
-// ── Autocorreção ao sair do campo ────────────────────────────────────────────
-async function corrigirCampos() {
-  const cidade = document.getElementById('inCidade').value.trim();
-  const nicho  = document.getElementById('inNicho').value.trim();
-  if (!cidade && !nicho) return;
-  try {
-    const r = await fetch('/corrigir', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({cidade, nicho})
-    });
-    const d = await r.json();
-    const msgs = [];
-    if (d.cidade !== cidade) { document.getElementById('inCidade').value = d.cidade; msgs.push(`Cidade: ${d.cidade}`); }
-    if (d.nicho  !== nicho)  { document.getElementById('inNicho').value  = d.nicho;  msgs.push(`Nicho: ${d.nicho}`); }
-    document.getElementById('hintCorr').textContent = msgs.length ? '✔ ' + msgs.join('  ·  ') : '';
-  } catch {}
-}
-document.getElementById('inCidade').addEventListener('blur', corrigirCampos);
-document.getElementById('inNicho').addEventListener('blur', corrigirCampos);
-
-// ── Iniciar ───────────────────────────────────────────────────────────────────
-async function iniciar() {
-  const cidade = document.getElementById('inCidade').value.trim();
-  const nicho  = document.getElementById('inNicho').value.trim();
-  if (!cidade || !nicho) { mostrarErro('Preencha cidade e nicho.'); return; }
-
-  await corrigirCampos();
-  const cidadeF = document.getElementById('inCidade').value.trim();
-  const nichoF  = document.getElementById('inNicho').value.trim();
-
-  setBusy(true);
-  setLog('Iniciando busca…');
-  ocultarErro();
-  ocultarDownload();
-  setProgress(0);
-
-  try {
-    const r = await fetch('/iniciar', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({cidade: cidadeF, nicho: nichoF})
-    });
-    const d = await r.json();
-    if (d.erro) { mostrarErro(d.erro); setBusy(false); return; }
-    jobAtual = d.job_id;
-    salvarHist(cidadeF, nichoF, jobAtual);
-    pollingInt = setInterval(polling, 1800);
-  } catch (e) {
-    mostrarErro('Erro de conexão.');
-    setBusy(false);
-  }
+CORRECOES = {
+    "hamburguer":"hamburguer","hamburger":"hamburguer",
+    "pizaria":"pizzaria","pizzeria":"pizzaria",
+    "padaraia":"padaria","paderia":"padaria",
+    "farmacia":"farmacia","farrmacia":"farmacia",
+    "acadmia":"academia",
+    "mecanica":"mecanica","mecanico":"mecanico",
+    "odontolgia":"odontologia","adovgado":"advogado",
+    "contabilidde":"contabilidade",
+    "restarante":"restaurante","restrurante":"restaurante",
+    "supermecado":"supermercado",
+    "barberia":"barbearia","barbaria":"barbearia",
+    "estetica":"estetica","esthetica":"estetica",
+    "petshop":"pet shop","pet shopt":"pet shop",
+    "consulotrio":"consultorio","clinika":"clinica","clincia":"clinica",
+    "sorvetaria":"sorveteria","lanchinete":"lanchonete",
+    "mrecado":"mercado","ofcina":"oficina",
+    "eletrica":"eletrica","hidraulica":"hidraulica",
+    "imobilaria":"imobiliaria","hotal":"hotel","hotell":"hotel",
+    "pousadda":"pousada",
+    "sao paulo":"Sao Paulo","san paulo":"Sao Paulo",
+    "rio de janerio":"Rio de Janeiro","rio de janiero":"Rio de Janeiro",
+    "belo orizonte":"Belo Horizonte",
+    "curitba":"Curitiba","curtiba":"Curitiba",
+    "forteleza":"Fortaleza","salvaldor":"Salvador","slavador":"Salvador",
+    "manuas":"Manaus","manaos":"Manaus",
+    "recfie":"Recife","reciife":"Recife",
+    "poro alegre":"Porto Alegre",
+    "goainia":"Goiania","goinia":"Goiania",
+    "camppinas":"Campinas","campinnas":"Campinas",
+    "brasilia":"Brasilia","brazilia":"Brasilia",
+    "florianpolis":"Florianopolis","vittoria":"Vitoria",
+    "macapa":"Macapa","belem":"Belem","bellem":"Belem",
+    "treresina":"Teresina","natel":"Natal",
+    "maceio":"Maceio","joao pessoa":"Joao Pessoa",
+    "poto velho":"Porto Velho","palmaz":"Palmas",
+    "campo grand":"Campo Grande","cuiaba":"Cuiaba",
+    "uberlandia":"Uberlandia","uberlania":"Uberlandia",
+    "sorocba":"Sorocaba",
+    "sanots":"Santos","guaruhos":"Guarulhos","ozasco":"Osasco",
+    "joinvile":"Joinville","londrinna":"Londrina","maringa":"Maringa",
+    "juiz de forra":"Juiz de Fora",
+    "niteroi":"Niteroi","nitroi":"Niteroi","nova iguacu":"Nova Iguacu",
 }
 
-// ── Polling ───────────────────────────────────────────────────────────────────
-async function polling() {
-  if (!jobAtual) return;
-  try {
-    const r = await fetch(`/status/${jobAtual}`);
-    const d = await r.json();
-    if (d.log && d.log.length) setLog(d.log.join('\n'));
-    if (d.progress) setProgress(d.progress);
-    if (d.status === 'concluido') {
-      clearInterval(pollingInt);
-      setBusy(false);
-      setProgress(100);
-      mostrarDownload(jobAtual);
-      atualizarHist(jobAtual, 'concluido');
-      renderHist();
-    }
-    if (d.status === 'erro') {
-      clearInterval(pollingInt);
-      setBusy(false);
-      mostrarErro('Erro durante a coleta.');
-      atualizarHist(jobAtual, 'erro');
-      renderHist();
-    }
-  } catch {}
-}
+def corrigir(texto):
+    chave = normalizar(texto)
+    if chave in CORRECOES:
+        return CORRECOES[chave]
+    return " ".join(CORRECOES.get(normalizar(t), t) for t in texto.strip().split())
 
-// ── UI helpers ────────────────────────────────────────────────────────────────
-function setBusy(v) {
-  const btn = document.getElementById('btnGerar');
-  document.getElementById('btnTxt').textContent = v ? 'Processando…' : '▶ Gerar Leads';
-  btn.disabled = v;
-  btn.classList.toggle('running', v);
-}
-function setLog(txt) {
-  const el = document.getElementById('logBox');
-  el.textContent = txt;
-  el.scrollTop = el.scrollHeight;
-}
-function setProgress(v) {
-  document.getElementById('progressBar').style.width = v + '%';
-}
-function mostrarErro(msg) {
-  const el = document.getElementById('msgErro');
-  el.textContent = '✕ ' + msg;
-  el.style.display = 'block';
-}
-function ocultarErro() { document.getElementById('msgErro').style.display = 'none'; }
-function mostrarDownload(jobId) {
-  const wrap = document.getElementById('downloadWrap');
-  document.getElementById('downloadLink').href = `/download/${jobId}`;
-  wrap.style.display = 'block';
-}
-function ocultarDownload() { document.getElementById('downloadWrap').style.display = 'none'; }
+def sanitizar(t):
+    return re.sub(r"[^\w\s-]", "", t).strip().replace(" ", "_")
 
-// ── Histórico local ───────────────────────────────────────────────────────────
-function salvarHist(cidade, nicho, jobId) {
-  histLocal = histLocal.filter(h => !(h.cidade === cidade && h.nicho === nicho));
-  histLocal.unshift({cidade, nicho, jobId, status:'rodando', data: new Date().toLocaleDateString('pt-BR')});
-  if (histLocal.length > 20) histLocal.pop();
-  localStorage.setItem('mc_hist', JSON.stringify(histLocal));
-  renderHist();
-}
-function atualizarHist(jobId, status) {
-  const h = histLocal.find(x => x.jobId === jobId);
-  if (h) { h.status = status; localStorage.setItem('mc_hist', JSON.stringify(histLocal)); }
-}
-function limparHist() {
-  histLocal = [];
-  localStorage.setItem('mc_hist', '[]');
-  renderHist();
-}
-function renderHist() {
-  const el = document.getElementById('histLista');
-  if (!histLocal.length) { el.innerHTML = '<div class="hist-empty">nenhuma busca ainda</div>'; return; }
-  el.innerHTML = histLocal.map(h => `
-    <div class="hist-item" onclick="preencherHist('${h.cidade}','${h.nicho}')">
-      <div class="hist-cidade">${h.cidade}</div>
-      <div class="hist-nicho">${h.nicho}</div>
-      <div class="hist-meta">
-        <span class="hist-data">${h.data || ''}</span>
-        <span class="badge badge-${h.status === 'concluido' ? 'ok' : h.status === 'erro' ? 'erro' : 'running'}">
-          ${h.status === 'concluido' ? 'ok' : h.status === 'erro' ? 'erro' : 'rodando'}
-        </span>
-      </div>
-    </div>
-  `).join('');
-}
-function preencherHist(cidade, nicho) {
-  document.getElementById('inCidade').value = cidade;
-  document.getElementById('inNicho').value  = nicho;
-  document.getElementById('hintCorr').textContent = '';
-}
+def pasta_output():
+    p = os.path.join(os.path.dirname(__file__), "outputs")
+    os.makedirs(p, exist_ok=True)
+    return p
 
-renderHist();
-</script>
-</body>
-</html>
+def gerar_whatsapp(tel):
+    nums = re.sub(r"\D", "", tel)
+    if not nums: return ""
+    if not nums.startswith("55"): nums = "55" + nums
+    return "https://wa.me/" + nums
+
+PADRAO_TEL = re.compile(r"(?:\+?55\s?)?(?:\(?\d{2}\)?[\s\-]?)(?:9\s?)?\d{4}[\s\-]?\d{4}")
+
+def extrair_detalhes(page, url):
+    dados = {"endereco": "", "telefone": "", "whatsapp": ""}
+    try:
+        page.goto(url, timeout=18000, wait_until="domcontentloaded")
+        page.wait_for_timeout(1400)
+        botoes = page.locator("button[aria-label]")
+        for i in range(botoes.count()):
+            try:
+                aria = botoes.nth(i).get_attribute("aria-label") or ""
+                al = aria.lower()
+                if not dados["endereco"] and any(p in al for p in ("endereco:","address:")):
+                    dados["endereco"] = re.sub(r"^[^:]+:\s*", "", aria).strip()
+                if not dados["telefone"] and any(p in al for p in ("telefone:","phone:","numero de telefone")):
+                    tel = re.sub(r"^[^:]+:\s*", "", aria).strip()
+                    dados["telefone"] = tel
+                    dados["whatsapp"] = gerar_whatsapp(tel)
+            except Exception:
+                pass
+            if dados["endereco"] and dados["telefone"]:
+                return dados
+        for classe in ("Io6YTe", "rogA2c", "AeaXub"):
+            divs = page.locator("div." + classe)
+            for i in range(divs.count()):
+                try:
+                    txt = divs.nth(i).inner_text().strip()
+                    if not txt: continue
+                    if not dados["endereco"] and re.search(r"\d{4,}", txt) and "," in txt and len(txt) > 10:
+                        if not re.search(r"[\+\(\)]{1}.*\d{4}", txt):
+                            dados["endereco"] = txt.replace("\n", ", ")
+                    if not dados["telefone"] and re.match(r"^[\+\(\d][\d\s\(\)\-\.]{6,}$", txt):
+                        dados["telefone"] = txt.strip()
+                        dados["whatsapp"] = gerar_whatsapp(txt)
+                except Exception:
+                    pass
+            if dados["endereco"] and dados["telefone"]:
+                return dados
+        corpo = page.inner_text("body")[:12000]
+        if not dados["telefone"]:
+            m = PADRAO_TEL.search(corpo)
+            if m:
+                tel = m.group().strip()
+                dados["telefone"] = tel
+                dados["whatsapp"] = gerar_whatsapp(tel)
+        if not dados["endereco"]:
+            pads = re.findall(r"[A-Za-z][^\n]{5,80}(?:\d{5}-\d{3}|\d{8})", corpo)
+            if pads: dados["endereco"] = pads[0].strip()
+    except Exception:
+        pass
+    return dados
+
+def salvar_xlsx(resultados, cidade, nicho):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.worksheet.datavalidation import DataValidation
+
+    wb = Workbook()
+    C_H_BG = "1e8a2e"; C_H_FT = "FFFFFF"
+    C_PAR = "eaf5eb"; C_IMPAR = "FFFFFF"
+    C_BORDA = "a8d4ac"; C_TITU = "0d4f18"
+
+    def brd(cor=C_BORDA):
+        s = Side(style="thin", color=cor)
+        return Border(left=s, right=s, top=s, bottom=s)
+
+    ws = wb.active
+    ws.title = "Leads"
+    ws.merge_cells("A1:H1")
+    c = ws["A1"]
+    c.value = "LEADS - " + nicho.upper() + " EM " + cidade.upper()
+    c.font = Font(name="Arial", bold=True, size=14, color=C_TITU)
+    c.alignment = Alignment(horizontal="center", vertical="center")
+    c.fill = PatternFill("solid", fgColor="d4edda")
+    ws.row_dimensions[1].height = 32
+
+    ws.merge_cells("A2:H2")
+    c2 = ws["A2"]
+    c2.value = ("Gerado em " + date.today().strftime("%d/%m/%Y") +
+                " - " + str(len(resultados)) + " estabelecimentos - MCLeadProspecta")
+    c2.font = Font(name="Arial", size=9, color="3a7d44", italic=True)
+    c2.alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[2].height = 16
+    ws.row_dimensions[3].height = 6
+
+    for col, txt in enumerate(["Nome","Endereco","Telefone","WhatsApp",
+                                "Link Maps","Status","Observacoes","Prioridade"], 1):
+        c = ws.cell(row=4, column=col, value=txt)
+        c.font = Font(name="Arial", bold=True, size=10, color=C_H_FT)
+        c.fill = PatternFill("solid", fgColor=C_H_BG)
+        c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        c.border = brd()
+    ws.row_dimensions[4].height = 24
+
+    for idx, r in enumerate(resultados, 1):
+        lin = idx + 4
+        cor_bg = C_PAR if idx % 2 == 0 else C_IMPAR
+        vals = [r["nome"], r["endereco"] or "-", r["telefone"] or "-",
+                r["whatsapp"] or "-", r["url"], "Novo Lead", "", "Media"]
+        for col, val in enumerate(vals, 1):
+            c = ws.cell(row=lin, column=col, value=val)
+            c.font = Font(name="Arial", size=9)
+            c.fill = PatternFill("solid", fgColor=cor_bg)
+            c.border = brd()
+            c.alignment = Alignment(vertical="center")
+            if col == 4 and val.startswith("http"):
+                c.hyperlink = val; c.value = "Abrir WhatsApp"
+                c.font = Font(name="Arial", size=9, color="0d6b1e", underline="single")
+            if col == 5 and val.startswith("http"):
+                c.hyperlink = val; c.value = "Ver no Maps"
+                c.font = Font(name="Arial", size=9, color="1e8a2e", underline="single")
+            if col == 6:
+                c.font = Font(name="Arial", bold=True, size=9, color="1e8a2e")
+                c.alignment = Alignment(horizontal="center", vertical="center")
+            if col == 8:
+                c.alignment = Alignment(horizontal="center", vertical="center")
+        ws.row_dimensions[lin].height = 17
+
+    total = len(resultados) + 4
+    op_s = '"Novo Lead,Tentativa de Contato,Contactado,Em Negociacao,Proposta Enviada,Fechado,Sem Interesse,Inativo"'
+    dv = DataValidation(type="list", formula1=op_s, allow_blank=True, showDropDown=False)
+    dv.sqref = "F5:F" + str(total)
+    ws.add_data_validation(dv)
+
+    dp = DataValidation(type="list", formula1='"Alta,Media,Baixa,VIP"',
+                        allow_blank=True, showDropDown=False)
+    dp.sqref = "H5:H" + str(total)
+    ws.add_data_validation(dp)
+
+    for col, w in zip("ABCDEFGH", [34,42,18,16,14,22,38,12]):
+        ws.column_dimensions[col].width = w
+    ws.freeze_panes = "A5"
+
+    nome = sanitizar(cidade) + "_" + sanitizar(nicho) + "_" + date.today().strftime("%Y%m%d") + "_" + uuid.uuid4().hex[:6] + ".xlsx"
+    caminho = os.path.join(pasta_output(), nome)
+    wb.save(caminho)
+    return caminho, nome
+
+def worker(job_id, cidade, nicho):
+    def log(msg):
+        with JOBS_LOCK:
+            JOBS[job_id]["log"].append(msg)
+
+    def set_prog(p):
+        with JOBS_LOCK:
+            JOBS[job_id]["progress"] = p
+
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        log("Playwright nao instalado.")
+        with JOBS_LOCK: JOBS[job_id]["status"] = "erro"
+        return
+
+    busca = nicho + " em " + cidade
+    url_maps = "https://www.google.com/maps/search/" + busca.replace(" ", "+")
+    log("Iniciando: " + busca)
+    if CHROMIUM_PATH:
+        log("Chromium: " + CHROMIUM_PATH)
+
+    try:
+        with sync_playwright() as p:
+            launch_kwargs = dict(
+                headless=True,
+                args=[
+                    "--no-sandbox",
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu",
+                    "--disable-blink-features=AutomationControlled",
+                    "--disable-setuid-sandbox",
+                    "--single-process",
+                    "--lang=pt-BR",
+                ]
+            )
+            if CHROMIUM_PATH:
+                launch_kwargs["executable_path"] = CHROMIUM_PATH
+
+            browser = p.chromium.launch(**launch_kwargs)
+            ctx = browser.new_context(
+                locale="pt-BR",
+                timezone_id="America/Sao_Paulo",
+                viewport={"width": 1280, "height": 800},
+                user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            )
+            page_lista = ctx.new_page()
+            page_det = ctx.new_page()
+
+            page_lista.goto(url_maps, timeout=55000, wait_until="domcontentloaded")
+            page_det.goto("about:blank")
+
+            try:
+                page_lista.wait_for_selector("div[role='feed']", timeout=14000)
+            except Exception:
+                log("Google Maps nao respondeu.")
+                with JOBS_LOCK: JOBS[job_id]["status"] = "erro"
+                browser.close()
+                return
+
+            log("Carregando resultados...")
+            painel = page_lista.locator("div[role='feed']")
+            for _ in range(14):
+                painel.evaluate("el => el.scrollBy(0, 2800)")
+                page_lista.wait_for_timeout(1100)
+                if page_lista.locator("span:has-text('Voce chegou ao fim da lista')").count() > 0:
+                    break
+
+            elementos = page_lista.locator("a[href*='/place/']")
+            nomes_vistos = set()
+            estabs = []
+            for i in range(elementos.count()):
+                try:
+                    el = elementos.nth(i)
+                    href = el.get_attribute("href") or ""
+                    if "/place/" not in href: continue
+                    nome = el.get_attribute("aria-label") or el.inner_text().strip()
+                    if nome and len(nome) > 2 and nome not in nomes_vistos and "google" not in nome.lower():
+                        nomes_vistos.add(nome)
+                        if href.startswith("/"): href = "https://www.google.com" + href
+                        estabs.append({"nome": nome, "url": href})
+                except Exception:
+                    pass
+
+            total_enc = len(estabs)
+            log(str(total_enc) + " locais encontrados.")
+            with JOBS_LOCK: JOBS[job_id]["total"] = total_enc
+
+            resultados = []
+            for idx, est in enumerate(estabs, 1):
+                log("[" + str(idx) + "/" + str(total_enc) + "] " + est["nome"][:50])
+                det = extrair_detalhes(page_det, est["url"])
+                resultados.append({
+                    "nome": est["nome"],
+                    "telefone": det["telefone"],
+                    "whatsapp": det["whatsapp"],
+                    "endereco": det["endereco"],
+                    "url": est["url"],
+                })
+                set_prog(int(idx / total_enc * 100))
+                time.sleep(0.55)
+
+            browser.close()
+            caminho, nome_arq = salvar_xlsx(resultados, cidade, nicho)
+            com_tel = sum(1 for r in resultados if r["telefone"])
+            log("Concluido - " + str(len(resultados)) + " leads - " + str(com_tel) + " com telefone")
+
+            with JOBS_LOCK:
+                JOBS[job_id]["status"] = "concluido"
+                JOBS[job_id]["file_path"] = caminho
+                JOBS[job_id]["file_name"] = nome_arq
+                JOBS[job_id]["progress"] = 100
+
+    except Exception as e:
+        log("Erro: " + str(e))
+        with JOBS_LOCK: JOBS[job_id]["status"] = "erro"
+
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/corrigir", methods=["POST"])
+def rota_corrigir():
+    data = request.get_json()
+    cidade = corrigir(data.get("cidade", "").strip())
+    nicho = corrigir(data.get("nicho", "").strip())
+    return jsonify({"cidade": cidade, "nicho": nicho})
+
+@app.route("/iniciar", methods=["POST"])
+def rota_iniciar():
+    data = request.get_json()
+    cidade = corrigir(data.get("cidade", "").strip())
+    nicho = corrigir(data.get("nicho", "").strip())
+    if not cidade or not nicho:
+        return jsonify({"erro": "Preencha cidade e nicho"}), 400
+
+    job_id = uuid.uuid4().hex
+    with JOBS_LOCK:
+        JOBS[job_id] = {
+            "status": "rodando", "log": [], "progress": 0,
+            "file_path": None, "file_name": None, "total": 0,
+            "cidade": cidade, "nicho": nicho,
+            "criado_em": datetime.now().isoformat(),
+        }
+    threading.Thread(target=worker, args=(job_id, cidade, nicho), daemon=True).start()
+    return jsonify({"job_id": job_id, "cidade": cidade, "nicho": nicho})
+
+@app.route("/status/<job_id>")
+def rota_status(job_id):
+    with JOBS_LOCK:
+        job = JOBS.get(job_id)
+    if not job:
+        return jsonify({"erro": "Job nao encontrado"}), 404
+    return jsonify({
+        "status": job["status"],
+        "progress": job["progress"],
+        "log": job["log"],
+        "total": job["total"],
+        "file_name": job.get("file_name"),
+    })
+
+@app.route("/download/<job_id>")
+def rota_download(job_id):
+    with JOBS_LOCK:
+        job = JOBS.get(job_id)
+    if not job or job["status"] != "concluido":
+        return "Arquivo nao disponivel", 404
+    return send_file(
+        job["file_path"],
+        as_attachment=True,
+        download_name=job["file_name"],
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+@app.route("/historico")
+def rota_historico():
+    with JOBS_LOCK:
+        hist = [
+            {"cidade": j["cidade"], "nicho": j["nicho"], "status": j["status"],
+             "total": j["total"], "criado_em": j["criado_em"], "job_id": jid}
+            for jid, j in JOBS.items()
+        ]
+    hist.sort(key=lambda x: x["criado_em"], reverse=True)
+    return jsonify(hist[:30])
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
