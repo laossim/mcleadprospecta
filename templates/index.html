@@ -6,82 +6,65 @@
 <title>MCLeadProspecta</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:#060d07;color:#cce8cf;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 16px 60px}
-
-/* HEADER */
+body{background:#060d07;color:#cce8cf;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:32px 16px 60px}
 .header{width:100%;max-width:740px;display:flex;align-items:center;gap:12px;margin-bottom:10px}
 .header svg{flex-shrink:0}
-.header h1{font-size:1.6rem;font-weight:800;color:#34d058;letter-spacing:-.5px}
-.header p{font-size:.75rem;color:#4a7d52;margin-top:2px}
+.header h1{font-size:1.55rem;font-weight:800;color:#34d058;letter-spacing:-.5px}
+.header p{font-size:.74rem;color:#4a7d52;margin-top:2px}
 .header-space{flex:1}
-.gh-link{font-size:.68rem;color:#1e4025;text-decoration:none;transition:color .2s}
-.gh-link:hover{color:#4a7d52}
-.sep{width:100%;max-width:740px;height:1px;background:linear-gradient(90deg,transparent,#1a3d1f,transparent);margin:16px 0 28px}
-
-/* CARD */
-.card{background:#0b1a0c;border:1px solid #163320;border-radius:12px;padding:32px;width:100%;max-width:740px;margin-bottom:12px}
-
-/* FIELDS */
-.fields{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:6px}
-@media(max-width:540px){.fields{grid-template-columns:1fr}}
-.field label{display:block;font-size:.65rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#3d7044;margin-bottom:7px}
-.field input{width:100%;background:#0f2011;border:none;border-bottom:2px solid #1a3d20;color:#cce8cf;font-size:1.05rem;padding:11px 14px;outline:none;border-radius:6px 6px 0 0;transition:border-color .2s}
+.gh{font-size:.68rem;color:#1a3a20;text-decoration:none;transition:color .2s}
+.gh:hover{color:#4a7d52}
+.sep{width:100%;max-width:740px;height:1px;background:linear-gradient(90deg,transparent,#163320,transparent);margin:14px 0 24px}
+.card{background:#0b1a0c;border:1px solid #163320;border-radius:12px;padding:28px;width:100%;max-width:740px;margin-bottom:12px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:6px}
+@media(max-width:520px){.fields{grid-template-columns:1fr}}
+.field label{display:block;font-size:.64rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#3d7044;margin-bottom:6px}
+.field input{width:100%;background:#0f2011;border:none;border-bottom:2px solid #1a3d20;color:#cce8cf;font-size:1rem;padding:10px 13px;outline:none;border-radius:6px 6px 0 0;transition:border-color .2s}
 .field input:focus{border-bottom-color:#34d058}
-.field input::placeholder{color:#2a5030;opacity:.8}
-
-.hint{font-size:.72rem;color:#34d058;min-height:20px;margin:8px 0 20px;font-style:italic;padding-left:2px}
-
-/* BTN */
-#btn{width:100%;padding:15px;background:#1e8a2e;color:#fff;font-size:.95rem;font-weight:700;letter-spacing:.4px;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .2s}
+.field input::placeholder{color:#2a5030;opacity:.7}
+.hint{font-size:.71rem;color:#34d058;min-height:18px;margin:7px 0 18px;font-style:italic}
+.btns{display:flex;gap:10px}
+#btn{flex:1;padding:14px;background:#1e8a2e;color:#fff;font-size:.92rem;font-weight:700;border:none;border-radius:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:background .2s}
 #btn:hover:not(:disabled){background:#25a838}
 #btn:disabled{opacity:.45;cursor:not-allowed}
-.dot{width:8px;height:8px;border-radius:50%;background:#fff;display:none;animation:blink 1s infinite}
+#btnCancel{padding:14px 18px;background:#1a1a1a;color:#888;font-size:.85rem;border:1px solid #333;border-radius:10px;cursor:pointer;display:none;transition:all .2s}
+#btnCancel:hover{background:#2a0808;color:#f87171;border-color:#5a1010}
+.dot{width:7px;height:7px;border-radius:50%;background:#fff;display:none;animation:blink 1s infinite}
 #btn.busy .dot{display:block}
 @keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.2;transform:scale(.5)}}
-
-/* PROGRESS */
-.pbar-wrap{margin-top:14px;background:#0f2011;border-radius:99px;height:4px;overflow:hidden}
+.pbar-wrap{margin-top:13px;background:#0f2011;border-radius:99px;height:4px;overflow:hidden}
 #pbar{height:100%;width:0%;background:linear-gradient(90deg,#1e8a2e,#34d058);border-radius:99px;transition:width .5s ease}
-
-/* ERRO / DOWNLOAD */
-#erro{display:none;margin-top:12px;font-size:.8rem;color:#e05252;text-align:center}
-#dl{display:none;margin-top:14px;text-align:center}
-#dl a{display:inline-block;background:#0f2011;color:#34d058;border:1px solid #1a3d20;border-radius:8px;padding:10px 28px;font-size:.85rem;font-weight:600;text-decoration:none;transition:background .2s}
+#erro{display:none;margin-top:11px;font-size:.79rem;color:#e05252;text-align:center}
+#dl{display:none;margin-top:13px;text-align:center}
+#dl a{display:inline-block;background:#0f2011;color:#34d058;border:1px solid #1a3d20;border-radius:8px;padding:9px 26px;font-size:.84rem;font-weight:600;text-decoration:none;transition:background .2s}
 #dl a:hover{background:#163320}
-
-/* GRID */
-.grid{display:grid;grid-template-columns:1fr 260px;gap:12px;width:100%;max-width:740px}
-@media(max-width:600px){.grid{grid-template-columns:1fr}}
+.grid{display:grid;grid-template-columns:1fr 250px;gap:12px;width:100%;max-width:740px}
+@media(max-width:580px){.grid{grid-template-columns:1fr}}
 .panel{background:#0b1a0c;border:1px solid #163320;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
-.panel-head{padding:9px 16px;border-bottom:1px solid #163320;font-size:.62rem;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:#3d7044;display:flex;align-items:center;justify-content:space-between}
-.panel-head button{background:none;border:none;color:#1e4025;cursor:pointer;font-size:.68rem;transition:color .2s}
-.panel-head button:hover{color:#3d7044}
-
-/* LOG */
-#log{flex:1;padding:14px;font-family:'Cascadia Code','Consolas',monospace;font-size:.72rem;color:#4dbb5a;background:#080f09;overflow-y:auto;min-height:160px;max-height:240px;white-space:pre-wrap;word-break:break-word;line-height:1.65}
-
-/* HIST */
-#hist{flex:1;overflow-y:auto;max-height:240px}
-.hi{padding:10px 14px;border-bottom:1px solid #0f1f10;cursor:pointer;transition:background .15s}
+.ph{padding:9px 15px;border-bottom:1px solid #163320;font-size:.61rem;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:#3d7044;display:flex;align-items:center;justify-content:space-between}
+.ph button{background:none;border:none;color:#1a3a20;cursor:pointer;font-size:.67rem;transition:color .2s}
+.ph button:hover{color:#3d7044}
+#log{flex:1;padding:13px;font-family:'Cascadia Code','Consolas',monospace;font-size:.71rem;color:#4dbb5a;background:#080f09;overflow-y:auto;min-height:150px;max-height:230px;white-space:pre-wrap;word-break:break-word;line-height:1.65}
+#hist{flex:1;overflow-y:auto;max-height:230px}
+.hi{padding:10px 13px;border-bottom:1px solid #0f1f10;cursor:pointer;transition:background .15s}
 .hi:last-child{border:none}
 .hi:hover{background:#0f2011}
-.hi-cidade{font-size:.85rem;font-weight:600;color:#cce8cf}
-.hi-nicho{font-size:.73rem;color:#3d7044;margin-top:2px}
-.hi-foot{display:flex;align-items:center;justify-content:space-between;margin-top:5px}
-.hi-data{font-size:.65rem;color:#2a5030}
-.badge{font-size:.62rem;font-weight:700;padding:2px 8px;border-radius:99px;text-transform:uppercase}
+.hi-c{font-size:.84rem;font-weight:600;color:#cce8cf}
+.hi-n{font-size:.72rem;color:#3d7044;margin-top:2px}
+.hi-f{display:flex;align-items:center;justify-content:space-between;margin-top:5px}
+.hi-d{font-size:.64rem;color:#2a5030}
+.badge{font-size:.61rem;font-weight:700;padding:2px 7px;border-radius:99px;text-transform:uppercase}
 .b-ok{background:#0b2e10;color:#34d058}
 .b-run{background:#142808;color:#86efac}
 .b-err{background:#2e0b0b;color:#f87171}
-.hi-empty{padding:24px;text-align:center;font-size:.77rem;color:#1e4025;font-style:italic}
-
-footer{margin-top:28px;font-size:.65rem;color:#1a3d20;text-align:center}
+.hi-empty{padding:22px;text-align:center;font-size:.75rem;color:#1e4025;font-style:italic}
+footer{margin-top:26px;font-size:.64rem;color:#163320;text-align:center}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <svg width="38" height="38" viewBox="0 0 48 48">
+  <svg width="36" height="36" viewBox="0 0 48 48">
     <polygon points="24,2 44,13 44,35 24,46 4,35 4,13" fill="#1e8a2e" stroke="#34d058" stroke-width="1.5"/>
     <polyline points="12,36 12,16 24,26 36,16 36,36" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>
@@ -90,7 +73,7 @@ footer{margin-top:28px;font-size:.65rem;color:#1a3d20;text-align:center}
     <p>Memocash Solucoes</p>
   </div>
   <div class="header-space"></div>
-  <a class="gh-link" href="https://github.com/laossim" target="_blank">@laossim</a>
+  <a class="gh" href="https://github.com/laossim" target="_blank">@laossim</a>
 </div>
 
 <div class="sep"></div>
@@ -99,21 +82,21 @@ footer{margin-top:28px;font-size:.65rem;color:#1a3d20;text-align:center}
   <div class="fields">
     <div class="field">
       <label>Cidade</label>
-      <input id="iCidade" type="text" placeholder="ex: Sao Paulo, Curitiba" autocomplete="off">
+      <input id="iC" type="text" placeholder="ex: Sao Paulo, Curitiba" autocomplete="off">
     </div>
     <div class="field">
       <label>Nicho</label>
-      <input id="iNicho" type="text" placeholder="ex: pizzaria, barbearia" autocomplete="off">
+      <input id="iN" type="text" placeholder="ex: pizzaria, barbearia" autocomplete="off">
     </div>
   </div>
-
   <div class="hint" id="hint"></div>
-
-  <button id="btn" onclick="iniciar()">
-    <span class="dot"></span>
-    <span id="btnTxt">Gerar Leads</span>
-  </button>
-
+  <div class="btns">
+    <button id="btn" onclick="iniciar()">
+      <span class="dot"></span>
+      <span id="btnTxt">Gerar Leads</span>
+    </button>
+    <button id="btnCancel" onclick="cancelar()">Cancelar</button>
+  </div>
   <div class="pbar-wrap"><div id="pbar"></div></div>
   <div id="erro"></div>
   <div id="dl"><a id="dlLink" href="#">Baixar Planilha</a></div>
@@ -121,14 +104,11 @@ footer{margin-top:28px;font-size:.65rem;color:#1a3d20;text-align:center}
 
 <div class="grid">
   <div class="panel">
-    <div class="panel-head">Log em tempo real</div>
+    <div class="ph">Log em tempo real</div>
     <div id="log">Aguardando...</div>
   </div>
   <div class="panel">
-    <div class="panel-head">
-      Historico
-      <button onclick="limpar()">limpar</button>
-    </div>
+    <div class="ph">Historico <button onclick="limpar()">limpar</button></div>
     <div id="hist"><div class="hi-empty">nenhuma busca ainda</div></div>
   </div>
 </div>
@@ -136,39 +116,39 @@ footer{margin-top:28px;font-size:.65rem;color:#1a3d20;text-align:center}
 <footer>MCLeadProspecta &middot; Memocash Solucoes &middot; github.com/laossim</footer>
 
 <script>
-let jobId=null, poll=null;
+let jobId=null,poll=null;
 let hist=JSON.parse(localStorage.getItem('mch')||'[]');
 
-document.getElementById('iCidade').addEventListener('keydown',e=>{
-  if(e.key==='Enter'||e.key==='Tab'){e.preventDefault();document.getElementById('iNicho').focus()}
+document.getElementById('iC').addEventListener('keydown',e=>{
+  if(e.key==='Enter'||e.key==='Tab'){e.preventDefault();document.getElementById('iN').focus()}
 });
-document.getElementById('iNicho').addEventListener('keydown',e=>{
+document.getElementById('iN').addEventListener('keydown',e=>{
   if(e.key==='Enter'){e.preventDefault();iniciar()}
 });
 
 async function corrigir(){
-  const c=document.getElementById('iCidade').value.trim();
-  const n=document.getElementById('iNicho').value.trim();
+  const c=document.getElementById('iC').value.trim();
+  const n=document.getElementById('iN').value.trim();
   if(!c&&!n)return;
   try{
     const r=await fetch('/corrigir',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cidade:c,nicho:n})});
     const d=await r.json();
     const msgs=[];
-    if(d.cidade!==c){document.getElementById('iCidade').value=d.cidade;msgs.push('Cidade: '+d.cidade)}
-    if(d.nicho!==n){document.getElementById('iNicho').value=d.nicho;msgs.push('Nicho: '+d.nicho)}
+    if(d.cidade!==c){document.getElementById('iC').value=d.cidade;msgs.push(d.cidade)}
+    if(d.nicho!==n){document.getElementById('iN').value=d.nicho;msgs.push(d.nicho)}
     document.getElementById('hint').textContent=msgs.length?'Corrigido: '+msgs.join(' / '):'';
   }catch(e){}
 }
-document.getElementById('iCidade').addEventListener('blur',corrigir);
-document.getElementById('iNicho').addEventListener('blur',corrigir);
+document.getElementById('iC').addEventListener('blur',corrigir);
+document.getElementById('iN').addEventListener('blur',corrigir);
 
 async function iniciar(){
-  const c=document.getElementById('iCidade').value.trim();
-  const n=document.getElementById('iNicho').value.trim();
+  const c=document.getElementById('iC').value.trim();
+  const n=document.getElementById('iN').value.trim();
   if(!c||!n){setErro('Preencha cidade e nicho.');return}
   await corrigir();
-  const cf=document.getElementById('iCidade').value.trim();
-  const nf=document.getElementById('iNicho').value.trim();
+  const cf=document.getElementById('iC').value.trim();
+  const nf=document.getElementById('iN').value.trim();
   setBusy(true);setLog('Iniciando...');setErro('');setDl(false);setProg(0);
   try{
     const r=await fetch('/iniciar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cidade:cf,nicho:nf})});
@@ -176,8 +156,16 @@ async function iniciar(){
     if(d.erro){setErro(d.erro);setBusy(false);return}
     jobId=d.job_id;
     addHist(cf,nf,jobId);
-    poll=setInterval(polling,2000);
+    poll=setInterval(polling,2500);
   }catch(e){setErro('Erro de conexao.');setBusy(false)}
+}
+
+async function cancelar(){
+  if(!jobId)return;
+  try{await fetch('/cancelar/'+jobId,{method:'POST'})}catch(e){}
+  clearInterval(poll);
+  setBusy(false);
+  setLog(document.getElementById('log').textContent+'\nCancelado.');
 }
 
 async function polling(){
@@ -192,7 +180,9 @@ async function polling(){
       updHist(jobId,'ok');renderHist();
     }
     if(d.status==='erro'){
-      clearInterval(poll);setBusy(false);setErro('Erro durante a coleta.');
+      clearInterval(poll);setBusy(false);
+      if(d.tem_parcial){setDl(true,jobId);setErro('Coleta parcial salva.')}
+      else setErro('Erro durante a coleta.');
       updHist(jobId,'err');renderHist();
     }
   }catch(e){}
@@ -202,15 +192,15 @@ function setBusy(v){
   const b=document.getElementById('btn');
   document.getElementById('btnTxt').textContent=v?'Processando...':'Gerar Leads';
   b.disabled=v;b.classList.toggle('busy',v);
+  document.getElementById('btnCancel').style.display=v?'block':'none';
 }
 function setLog(t){const el=document.getElementById('log');el.textContent=t;el.scrollTop=el.scrollHeight}
 function setProg(v){document.getElementById('pbar').style.width=v+'%'}
-function setErro(m){const el=document.getElementById('erro');el.textContent=m?'x '+m:'';el.style.display=m?'block':'none'}
+function setErro(m){const el=document.getElementById('erro');el.textContent=m?m:'';el.style.display=m?'block':'none'}
 function setDl(v,jid){
   document.getElementById('dl').style.display=v?'block':'none';
   if(jid)document.getElementById('dlLink').href='/download/'+jid;
 }
-
 function addHist(c,n,jid){
   hist=hist.filter(h=>!(h.c===c&&h.n===n));
   hist.unshift({c,n,jid,s:'run',d:new Date().toLocaleDateString('pt-BR')});
@@ -228,17 +218,13 @@ function renderHist(){
   if(!hist.length){el.innerHTML='<div class="hi-empty">nenhuma busca ainda</div>';return}
   el.innerHTML=hist.map(h=>`
     <div class="hi" onclick="preencher('${h.c}','${h.n}')">
-      <div class="hi-cidade">${h.c}</div>
-      <div class="hi-nicho">${h.n}</div>
-      <div class="hi-foot">
-        <span class="hi-data">${h.d||''}</span>
-        <span class="badge ${h.s==='ok'?'b-ok':h.s==='err'?'b-err':'b-run'}">${h.s==='ok'?'ok':h.s==='err'?'erro':'rodando'}</span>
-      </div>
-    </div>`).join('');
+      <div class="hi-c">${h.c}</div><div class="hi-n">${h.n}</div>
+      <div class="hi-f"><span class="hi-d">${h.d||''}</span>
+      <span class="badge ${h.s==='ok'?'b-ok':h.s==='err'?'b-err':'b-run'}">${h.s==='ok'?'ok':h.s==='err'?'erro':'rodando'}</span>
+      </div></div>`).join('');
 }
 function preencher(c,n){
-  document.getElementById('iCidade').value=c;
-  document.getElementById('iNicho').value=n;
+  document.getElementById('iC').value=c;document.getElementById('iN').value=n;
   document.getElementById('hint').textContent='';
 }
 renderHist();
