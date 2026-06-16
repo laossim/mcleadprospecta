@@ -1,7 +1,6 @@
 # MCLeadProspecta Web - Memocash Solucoes - github.com/laossim
 
-import os, re, time, uuid, json, threading
-import unicodedata
+import os, re, time, uuid, threading, unicodedata
 from datetime import date, datetime
 from flask import Flask, render_template, request, jsonify, send_file
 
@@ -19,8 +18,7 @@ CORRECOES = {
     "pizaria":"pizzaria","pizzeria":"pizzaria",
     "padaraia":"padaria","paderia":"padaria",
     "farmacia":"farmacia","farrmacia":"farmacia",
-    "acadmia":"academia",
-    "mecanica":"mecanica","mecanico":"mecanico",
+    "acadmia":"academia","mecanica":"mecanica","mecanico":"mecanico",
     "odontolgia":"odontologia","adovgado":"advogado",
     "contabilidde":"contabilidade",
     "restarante":"restaurante","restrurante":"restaurante",
@@ -39,10 +37,8 @@ CORRECOES = {
     "belo orizonte":"Belo Horizonte",
     "curitba":"Curitiba","curtiba":"Curitiba",
     "forteleza":"Fortaleza","salvaldor":"Salvador","slavador":"Salvador",
-    "manuas":"Manaus","manaos":"Manaus",
-    "recfie":"Recife","reciife":"Recife",
-    "poro alegre":"Porto Alegre",
-    "goainia":"Goiania","goinia":"Goiania",
+    "manuas":"Manaus","manaos":"Manaus","recfie":"Recife","reciife":"Recife",
+    "poro alegre":"Porto Alegre","goainia":"Goiania","goinia":"Goiania",
     "camppinas":"Campinas","campinnas":"Campinas",
     "brasilia":"Brasilia","brazilia":"Brasilia",
     "florianpolis":"Florianopolis","vittoria":"Vitoria",
@@ -51,8 +47,7 @@ CORRECOES = {
     "maceio":"Maceio","joao pessoa":"Joao Pessoa",
     "poto velho":"Porto Velho","palmaz":"Palmas",
     "campo grand":"Campo Grande","cuiaba":"Cuiaba",
-    "uberlandia":"Uberlandia","uberlania":"Uberlandia",
-    "sorocba":"Sorocaba",
+    "uberlandia":"Uberlandia","uberlania":"Uberlandia","sorocba":"Sorocaba",
     "sanots":"Santos","guaruhos":"Guarulhos","ozasco":"Osasco",
     "joinvile":"Joinville","londrinna":"Londrina","maringa":"Maringa",
     "juiz de forra":"Juiz de Fora",
@@ -81,85 +76,81 @@ def gerar_whatsapp(tel):
 
 PADRAO_TEL = re.compile(r"(?:\+?55\s?)?(?:\(?\d{2}\)?[\s\-]?)(?:9\s?)?\d{4}[\s\-]?\d{4}")
 
-# ── EXTRAIR COM TIMEOUT REAL ──────────────────────────────────────────────────
-# Envolve o Playwright num thread separado com timeout Python
-# Se o browser travar, o thread e morto apos PAGE_TIMEOUT segundos
+# ── EXTRAIR DETALHES (roda na thread principal do worker, Playwright-safe) ──────
 
-PAGE_TIMEOUT = 12  # segundos por pagina
+def extrair_detalhes(page, url):
+    """Extrai telefone e endereco de uma pagina do Maps.
+    page.set_default_timeout() garante que nenhuma operacao trava mais de 12s.
+    """
+    dados = {"endereco": "", "telefone": "", "whatsapp": ""}
+    try:
+        page.goto(url, timeout=12000, wait_until="domcontentloaded")
+        page.wait_for_timeout(1800)
 
-def extrair_com_timeout(browser, url):
-    result = {"endereco": "", "telefone": "", "whatsapp": ""}
-    erro = [None]
-    done = threading.Event()
-
-    def _run():
-        page = None
+        # Tenta pelos botoes ARIA (mais confiavel)
         try:
-            page = browser.new_page()
-            page.goto(url, timeout=10000, wait_until="domcontentloaded")
-            page.wait_for_timeout(1200)
-
             botoes = page.locator("button[aria-label]")
-            for i in range(botoes.count()):
+            count = botoes.count()
+            for i in range(min(count, 30)):
                 try:
                     aria = botoes.nth(i).get_attribute("aria-label") or ""
                     al = aria.lower()
-                    if not result["endereco"] and any(p in al for p in ("endereco:","address:")):
-                        result["endereco"] = re.sub(r"^[^:]+:\s*", "", aria).strip()
-                    if not result["telefone"] and any(p in al for p in ("telefone:","phone:","numero de telefone")):
+                    if not dados["endereco"] and any(k in al for k in ("endereco:", "address:", "endere")):
+                        dados["endereco"] = re.sub(r"^[^:]+:\s*", "", aria).strip()
+                    if not dados["telefone"] and any(k in al for k in ("telefone:", "phone:", "numero")):
                         tel = re.sub(r"^[^:]+:\s*", "", aria).strip()
-                        result["telefone"] = tel
-                        result["whatsapp"] = gerar_whatsapp(tel)
+                        if tel:
+                            dados["telefone"] = tel
+                            dados["whatsapp"] = gerar_whatsapp(tel)
                 except Exception:
                     pass
-                if result["endereco"] and result["telefone"]:
-                    break
+                if dados["endereco"] and dados["telefone"]:
+                    return dados
+        except Exception:
+            pass
 
-            if not (result["endereco"] and result["telefone"]):
-                for classe in ("Io6YTe", "rogA2c", "AeaXub"):
-                    divs = page.locator("div." + classe)
-                    for i in range(divs.count()):
-                        try:
-                            txt = divs.nth(i).inner_text().strip()
-                            if not txt: continue
-                            if not result["endereco"] and re.search(r"\d{4,}", txt) and "," in txt and len(txt) > 10:
-                                if not re.search(r"[\+\(\)]{1}.*\d{4}", txt):
-                                    result["endereco"] = txt.replace("\n", ", ")
-                            if not result["telefone"] and re.match(r"^[\+\(\d][\d\s\(\)\-\.]{6,}$", txt):
-                                result["telefone"] = txt.strip()
-                                result["whatsapp"] = gerar_whatsapp(txt)
-                        except Exception:
-                            pass
-                    if result["endereco"] and result["telefone"]:
-                        break
+        # Tenta pelas divs de info
+        try:
+            for classe in ("Io6YTe", "rogA2c", "AeaXub", "LrzXr"):
+                divs = page.locator("div." + classe)
+                count = divs.count()
+                for i in range(min(count, 20)):
+                    try:
+                        txt = divs.nth(i).inner_text().strip()
+                        if not txt:
+                            continue
+                        if not dados["endereco"] and len(txt) > 10 and "," in txt and re.search(r"\d{4,}", txt):
+                            if not re.search(r"[\+\(].*\d{4}", txt):
+                                dados["endereco"] = txt.replace("\n", ", ")
+                        if not dados["telefone"] and re.match(r"^[\(\+\d][\d\s\(\)\-\.]{7,}$", txt):
+                            dados["telefone"] = txt.strip()
+                            dados["whatsapp"] = gerar_whatsapp(txt)
+                    except Exception:
+                        pass
+                if dados["endereco"] and dados["telefone"]:
+                    return dados
+        except Exception:
+            pass
 
-            if not result["telefone"]:
-                try:
-                    corpo = page.inner_text("body")[:8000]
-                    m = PADRAO_TEL.search(corpo)
-                    if m:
-                        result["telefone"] = m.group().strip()
-                        result["whatsapp"] = gerar_whatsapp(result["telefone"])
-                except Exception:
-                    pass
+        # Fallback: regex no texto da pagina
+        try:
+            corpo = page.inner_text("body")[:10000]
+            if not dados["telefone"]:
+                m = PADRAO_TEL.search(corpo)
+                if m:
+                    dados["telefone"] = m.group().strip()
+                    dados["whatsapp"] = gerar_whatsapp(dados["telefone"])
+        except Exception:
+            pass
 
-        except Exception as e:
-            erro[0] = str(e)
-        finally:
-            try:
-                if page: page.close()
-            except Exception:
-                pass
-            done.set()
+    except Exception:
+        pass
 
-    t = threading.Thread(target=_run, daemon=True)
-    t.start()
-    done.wait(timeout=PAGE_TIMEOUT)
-    return result
+    return dados
 
 # ── PLANILHA ──────────────────────────────────────────────────────────────────
 
-def salvar_xlsx(resultados, cidade, nicho):
+def salvar_xlsx(resultados, cidade, nicho, sufixo=""):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     from openpyxl.worksheet.datavalidation import DataValidation
@@ -173,8 +164,7 @@ def salvar_xlsx(resultados, cidade, nicho):
         s = Side(style="thin", color=cor)
         return Border(left=s, right=s, top=s, bottom=s)
 
-    ws = wb.active
-    ws.title = "Leads"
+    ws = wb.active; ws.title = "Leads"
     ws.merge_cells("A1:H1")
     c = ws["A1"]
     c.value = "LEADS - " + nicho.upper() + " EM " + cidade.upper()
@@ -185,15 +175,13 @@ def salvar_xlsx(resultados, cidade, nicho):
 
     ws.merge_cells("A2:H2")
     c2 = ws["A2"]
-    c2.value = ("Gerado em " + date.today().strftime("%d/%m/%Y") +
-                " - " + str(len(resultados)) + " leads - MCLeadProspecta")
+    c2.value = "Gerado em " + date.today().strftime("%d/%m/%Y") + " - " + str(len(resultados)) + " leads - MCLeadProspecta"
     c2.font = Font(name="Arial", size=9, color="3a7d44", italic=True)
     c2.alignment = Alignment(horizontal="center", vertical="center")
     ws.row_dimensions[2].height = 16
     ws.row_dimensions[3].height = 6
 
-    for col, txt in enumerate(["Nome","Endereco","Telefone","WhatsApp",
-                                "Link Maps","Status","Observacoes","Prioridade"], 1):
+    for col, txt in enumerate(["Nome","Endereco","Telefone","WhatsApp","Link Maps","Status","Observacoes","Prioridade"], 1):
         c = ws.cell(row=4, column=col, value=txt)
         c.font = Font(name="Arial", bold=True, size=10, color=C_H_FT)
         c.fill = PatternFill("solid", fgColor=C_H_BG)
@@ -228,25 +216,23 @@ def salvar_xlsx(resultados, cidade, nicho):
     total = len(resultados) + 4
     op_s = '"Novo Lead,Tentativa de Contato,Contactado,Em Negociacao,Proposta Enviada,Fechado,Sem Interesse,Inativo"'
     dv = DataValidation(type="list", formula1=op_s, allow_blank=True, showDropDown=False)
-    dv.sqref = "F5:F" + str(total)
-    ws.add_data_validation(dv)
-    dp = DataValidation(type="list", formula1='"Alta,Media,Baixa,VIP"',
-                        allow_blank=True, showDropDown=False)
-    dp.sqref = "H5:H" + str(total)
-    ws.add_data_validation(dp)
+    dv.sqref = "F5:F" + str(total); ws.add_data_validation(dv)
+    dp = DataValidation(type="list", formula1='"Alta,Media,Baixa,VIP"', allow_blank=True, showDropDown=False)
+    dp.sqref = "H5:H" + str(total); ws.add_data_validation(dp)
 
     for col, w in zip("ABCDEFGH", [34,42,18,16,14,22,38,12]):
         ws.column_dimensions[col].width = w
     ws.freeze_panes = "A5"
 
-    nome = sanitizar(cidade) + "_" + sanitizar(nicho) + "_" + date.today().strftime("%Y%m%d") + "_" + uuid.uuid4().hex[:6] + ".xlsx"
+    tag = ("_" + sufixo) if sufixo else ""
+    nome = sanitizar(cidade) + "_" + sanitizar(nicho) + "_" + date.today().strftime("%Y%m%d") + tag + "_" + uuid.uuid4().hex[:6] + ".xlsx"
     caminho = os.path.join(pasta_output(), nome)
     wb.save(caminho)
     return caminho, nome
 
 # ── WORKER ────────────────────────────────────────────────────────────────────
 
-MAX_JOB_MINUTES = 25  # job morre apos 25 minutos
+MAX_MINUTOS = 25
 
 def worker(job_id, cidade, nicho):
     inicio = time.time()
@@ -259,12 +245,11 @@ def worker(job_id, cidade, nicho):
         with JOBS_LOCK:
             JOBS[job_id]["progress"] = p
 
-    def cancelado():
+    def deve_parar():
         with JOBS_LOCK:
-            return JOBS[job_id].get("cancelado", False)
-
-    def expirou():
-        return (time.time() - inicio) > (MAX_JOB_MINUTES * 60)
+            cancelado = JOBS[job_id].get("cancelado", False)
+        expirou = (time.time() - inicio) > (MAX_MINUTOS * 60)
+        return cancelado, expirou
 
     try:
         from playwright.sync_api import sync_playwright
@@ -274,7 +259,6 @@ def worker(job_id, cidade, nicho):
         return
 
     busca = nicho + " em " + cidade
-    url_maps = "https://www.google.com/maps/search/" + busca.replace(" ", "+")
     log("Iniciando: " + busca)
 
     try:
@@ -282,43 +266,40 @@ def worker(job_id, cidade, nicho):
             browser = p.chromium.launch(
                 headless=True,
                 args=[
-                    "--no-sandbox",
-                    "--disable-dev-shm-usage",
-                    "--disable-gpu",
+                    "--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu",
                     "--disable-blink-features=AutomationControlled",
-                    "--disable-setuid-sandbox",
-                    "--single-process",
-                    "--lang=pt-BR",
+                    "--disable-setuid-sandbox", "--single-process", "--lang=pt-BR",
                 ]
             )
             ctx = browser.new_context(
-                locale="pt-BR",
-                timezone_id="America/Sao_Paulo",
+                locale="pt-BR", timezone_id="America/Sao_Paulo",
                 viewport={"width": 1280, "height": 800},
                 user_agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
             )
 
-            # ── Coleta lista de estabelecimentos ──────────────────────────
-            page = ctx.new_page()
-            page.goto(url_maps, timeout=50000, wait_until="domcontentloaded")
+            # Todas as operacoes Playwright na mesma thread — thread-safe
+            page_lista = ctx.new_page()
+            page_lista.set_default_timeout(15000)
+
+            url_maps = "https://www.google.com/maps/search/" + busca.replace(" ", "+")
+            page_lista.goto(url_maps, timeout=50000, wait_until="domcontentloaded")
 
             try:
-                page.wait_for_selector("div[role='feed']", timeout=14000)
+                page_lista.wait_for_selector("div[role='feed']", timeout=14000)
             except Exception:
                 log("Google Maps nao respondeu.")
                 with JOBS_LOCK: JOBS[job_id]["status"] = "erro"
-                browser.close()
-                return
+                browser.close(); return
 
             log("Carregando lista...")
-            painel = page.locator("div[role='feed']")
+            painel = page_lista.locator("div[role='feed']")
             for _ in range(14):
                 painel.evaluate("el => el.scrollBy(0, 2800)")
-                page.wait_for_timeout(1000)
-                if page.locator("span:has-text('fim da lista')").count() > 0:
+                page_lista.wait_for_timeout(900)
+                if page_lista.locator("span:has-text('fim da lista')").count() > 0:
                     break
 
-            elementos = page.locator("a[href*='/place/']")
+            elementos = page_lista.locator("a[href*='/place/']")
             nomes_vistos = set()
             estabs = []
             for i in range(elementos.count()):
@@ -334,24 +315,30 @@ def worker(job_id, cidade, nicho):
                 except Exception:
                     pass
 
-            page.close()  # fecha a pagina da lista, libera memoria
+            page_lista.close()
 
             total_enc = len(estabs)
-            log(str(total_enc) + " locais encontrados. Coletando detalhes...")
+            log(str(total_enc) + " locais. Coletando contatos...")
             with JOBS_LOCK: JOBS[job_id]["total"] = total_enc
 
-            # ── Coleta detalhes com timeout por pagina ────────────────────
+            # Pagina unica para detalhes — reaproveitada (sem threading)
+            page_det = ctx.new_page()
+            page_det.set_default_timeout(12000)  # qualquer op trava -> TimeoutError em 12s
+
             resultados = []
             for idx, est in enumerate(estabs, 1):
-                if cancelado():
-                    log("Cancelado pelo usuario.")
+                cancelado, expirou = deve_parar()
+                if cancelado:
+                    log("Cancelado. Salvando " + str(len(resultados)) + " leads...")
                     break
-                if expirou():
-                    log("Tempo limite atingido (" + str(MAX_JOB_MINUTES) + " min). Salvando parcial...")
+                if expirou:
+                    log("Tempo limite (" + str(MAX_MINUTOS) + "min). Salvando " + str(len(resultados)) + " leads...")
                     break
 
-                log("[" + str(idx) + "/" + str(total_enc) + "] " + est["nome"][:48])
-                det = extrair_com_timeout(browser, est["url"])
+                log("[" + str(idx) + "/" + str(total_enc) + "] " + est["nome"][:50])
+                det = extrair_detalhes(page_det, est["url"])
+
+                tel_ok = "tel:" + det["telefone"] if det["telefone"] else ""
                 resultados.append({
                     "nome": est["nome"],
                     "telefone": det["telefone"],
@@ -361,16 +348,17 @@ def worker(job_id, cidade, nicho):
                 })
                 set_prog(int(idx / total_enc * 100))
 
-                # Salva parcial a cada 20 para nao perder tudo se cair
-                if idx % 20 == 0 and resultados:
+                # Salva parcial a cada 15 leads
+                if idx % 15 == 0 and resultados:
                     try:
-                        caminho_p, _ = salvar_xlsx(resultados, cidade, nicho + "_parcial_" + str(idx))
-                        with JOBS_LOCK:
-                            JOBS[job_id]["file_path_parcial"] = caminho_p
-                        log("Parcial salvo: " + str(idx) + " leads")
+                        cp, _ = salvar_xlsx(resultados, cidade, nicho, "parcial" + str(idx))
+                        with JOBS_LOCK: JOBS[job_id]["file_path_parcial"] = cp
+                        com_tel_p = sum(1 for r in resultados if r["telefone"])
+                        log("Parcial salvo: " + str(idx) + " leads, " + str(com_tel_p) + " com tel")
                     except Exception:
                         pass
 
+            page_det.close()
             browser.close()
 
             if not resultados:
@@ -401,24 +389,23 @@ def index():
 @app.route("/corrigir", methods=["POST"])
 def rota_corrigir():
     data = request.get_json()
-    cidade = corrigir(data.get("cidade", "").strip())
-    nicho = corrigir(data.get("nicho", "").strip())
-    return jsonify({"cidade": cidade, "nicho": nicho})
+    return jsonify({
+        "cidade": corrigir(data.get("cidade","").strip()),
+        "nicho":  corrigir(data.get("nicho","").strip()),
+    })
 
 @app.route("/iniciar", methods=["POST"])
 def rota_iniciar():
     data = request.get_json()
-    cidade = corrigir(data.get("cidade", "").strip())
-    nicho = corrigir(data.get("nicho", "").strip())
+    cidade = corrigir(data.get("cidade","").strip())
+    nicho  = corrigir(data.get("nicho","").strip())
     if not cidade or not nicho:
         return jsonify({"erro": "Preencha cidade e nicho"}), 400
-
     job_id = uuid.uuid4().hex
     with JOBS_LOCK:
         JOBS[job_id] = {
             "status": "rodando", "log": [], "progress": 0,
-            "file_path": None, "file_name": None,
-            "file_path_parcial": None,
+            "file_path": None, "file_name": None, "file_path_parcial": None,
             "total": 0, "cancelado": False,
             "cidade": cidade, "nicho": nicho,
             "criado_em": datetime.now().isoformat(),
@@ -440,10 +427,10 @@ def rota_status(job_id):
     if not job:
         return jsonify({"erro": "Job nao encontrado"}), 404
     return jsonify({
-        "status": job["status"],
-        "progress": job["progress"],
-        "log": job["log"],
-        "total": job["total"],
+        "status":    job["status"],
+        "progress":  job["progress"],
+        "log":       job["log"],
+        "total":     job["total"],
         "file_name": job.get("file_name"),
         "tem_parcial": job.get("file_path_parcial") is not None,
     })
@@ -453,9 +440,9 @@ def rota_download(job_id):
     with JOBS_LOCK:
         job = JOBS.get(job_id)
     if not job:
-        return "Arquivo nao disponivel", 404
+        return "Nao encontrado", 404
     caminho = job.get("file_path") or job.get("file_path_parcial")
-    nome = job.get("file_name") or "leads_parcial.xlsx"
+    nome    = job.get("file_name") or "leads_parcial.xlsx"
     if not caminho:
         return "Arquivo nao disponivel", 404
     return send_file(caminho, as_attachment=True, download_name=nome,
@@ -464,14 +451,11 @@ def rota_download(job_id):
 @app.route("/historico")
 def rota_historico():
     with JOBS_LOCK:
-        hist = [
-            {"cidade": j["cidade"], "nicho": j["nicho"], "status": j["status"],
-             "total": j["total"], "criado_em": j["criado_em"], "job_id": jid}
-            for jid, j in JOBS.items()
-        ]
+        hist = [{"cidade":j["cidade"],"nicho":j["nicho"],"status":j["status"],
+                 "total":j["total"],"criado_em":j["criado_em"],"job_id":jid}
+                for jid,j in JOBS.items()]
     hist.sort(key=lambda x: x["criado_em"], reverse=True)
     return jsonify(hist[:30])
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT",5000)), debug=False)
