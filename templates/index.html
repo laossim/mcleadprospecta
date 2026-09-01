@@ -169,7 +169,7 @@ footer{margin-top:22px;font-size:.62rem;color:var(--muted2);text-align:center}
     </div>
     <div class="field">
       <label>Nicho</label>
-      <input id="iN" type="text" placeholder="ex: aula de ballet, pizzaria" autocomplete="off">
+      <input id="iN" type="text" placeholder="ex: pizzaria, barbearia, sorveteria" autocomplete="off">
     </div>
   </div>
   <div class="hint" id="hint"></div>
@@ -220,7 +220,7 @@ footer{margin-top:22px;font-size:.62rem;color:var(--muted2);text-align:center}
   <div class="modal-box">
     <h3>Reportar Problema</h3>
     <p>Descreva o que aconteceu. O log sera enviado automaticamente.</p>
-    <textarea id="reportMsg" placeholder="ex: Busca por ballet retornou academias erradas..."></textarea>
+    <textarea id="reportMsg" placeholder="ex: A busca retornou resultados fora do nicho, travou no meio..."></textarea>
     <div class="modal-btns">
       <button id="btnFechar" onclick="fecharReport()">Cancelar</button>
       <button id="btnEnviar" onclick="enviarReport()">Enviar</button>
@@ -408,9 +408,20 @@ async function enviarReport() {
   const logTxt = logLines.map(l=>l.txt).join('\n');
   const st = document.getElementById('reportSt');
   st.textContent = 'Enviando...'; st.style.color = 'var(--green-hi)';
+  const meta = {
+    userAgent: navigator.userAgent,
+    screen:    window.screen.width + 'x' + window.screen.height,
+    tema:      document.documentElement.getAttribute('data-theme') || 'dark',
+    cidade:    document.getElementById('iC').value.trim(),
+    nicho:     document.getElementById('iN').value.trim(),
+    url:       window.location.href,
+  };
   try {
-    const r = await fetch('/reportar', { method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({mensagem: msg, log: logTxt}) });
+    const r = await fetch('/reportar', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({mensagem: msg, log: logTxt, meta: meta})
+    });
     const d = await r.json();
     if (d.ok) { st.textContent='Enviado! Obrigado.'; setTimeout(fecharReport, 2000); }
     else { st.style.color='var(--err-color)'; st.textContent='Erro: '+(d.erro||'falha'); }
