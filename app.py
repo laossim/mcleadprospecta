@@ -525,17 +525,50 @@ def rota_download(jid):
 @app.route("/reportar",methods=["POST"])
 def rota_reportar():
     import json as _json
-    d=request.get_json()
-    msg=d.get("mensagem",""); log_txt=d.get("log","")
-    webhook=os.environ.get("DISCORD_WEBHOOK","")
-    if not webhook: return jsonify({"ok":False,"erro":"Webhook nao configurado"}),400
-    payload={"content":"**Reporte MCLeadProspecta**","embeds":[{
-        "title":"Erro reportado pelo usuario","color":0xe05252,
-        "description":"**Mensagem:** "+msg[:300]+"\n```"+log_txt[-800:]+"```"}]}
+    d = request.get_json()
+    msg     = d.get("mensagem","")
+    log_txt = d.get("log","")
+    meta    = d.get("meta",{})
+    webhook = os.environ.get("DISCORD_WEBHOOK","")
+    if not webhook:
+        return jsonify({"ok":False,"erro":"Webhook nao configurado"}),400
+
+    ip = request.headers.get("X-Forwarded-For", request.remote_addr or "?")
+    ip_mask = ip.split(",")[0].strip()[:20]
+
+    meta_txt = (
+        "**Horario:** " + datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "\n" +
+        "**Cidade/Nicho:** " + meta.get("cidade","?") + " / " + meta.get("nicho","?") + "\n" +
+        "**Tela:** "     + meta.get("screen","?") + "\n" +
+        "**Tema:** "     + meta.get("tema","?") + "\n" +
+        "**IP:** "       + ip_mask + "\n" +
+        "**Browser:** "  + meta.get("userAgent","?")[:120]
+    )
+
+    desc = (
+        "**Mensagem:** " + (msg[:300] if msg else "_sem descricao_") + "\n\n" +
+        "**Metadados:**\n" + meta_txt + "\n\n" +
+        "**Log:**\n```\n" + log_txt[-700:] + "\n```"
+    )[:4000]
+
+    payload = {
+        "username": "MCLeadProspecta",
+        "embeds": [{
+            "title": "Reporte de Problema",
+            "description": desc,
+            "color": 0xe05252,
+            "footer": {"text": "MCLeadProspecta - Memocash Solucoes"}
+        }]
+    }
+
     try:
-        req=_url.Request(webhook,data=_json.dumps(payload).encode(),
-                         headers={"Content-Type":"application/json"},method="POST")
-        _url.urlopen(req,timeout=5)
+        data = _json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        req  = _url.Request(
+            webhook, data=data,
+            headers={"Content-Type":"application/json","User-Agent":"MCLeadProspecta/1.0"},
+            method="POST"
+        )
+        _url.urlopen(req, timeout=8)
         return jsonify({"ok":True})
     except Exception as e:
         return jsonify({"ok":False,"erro":str(e)}),500
