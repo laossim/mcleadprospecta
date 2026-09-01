@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCLeadProspecta</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#060d07;color:#cce8cf;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:28px 14px 56px}
+.hdr{width:100%;max-width:760px;display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.hdr h1{font-size:1.5rem;font-weight:800;color:#34d058;letter-spacing:-.5px;line-height:1}
+.hdr p{font-size:.72rem;color:#3d6644;margin-top:2px}
+.hdr-sp{flex:1}
+.gh{font-size:.67rem;color:#1a3a20;text-decoration:none;transition:color .2s}
+.gh:hover{color:#3d6644}
+.sep{width:100%;max-width:760px;height:1px;background:linear-gradient(90deg,transparent,#163320,transparent);margin:12px 0 22px}
+.card{background:#0b1a0c;border:1px solid #163320;border-radius:12px;padding:24px 24px 20px;width:100%;max-width:760px;margin-bottom:10px}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:5px}
+@media(max-width:500px){.fields{grid-template-columns:1fr}}
+.field label{display:block;font-size:.62rem;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:#2e5e35;margin-bottom:5px}
+.field input{width:100%;background:#0f2011;border:none;border-bottom:2px solid #1a3d20;color:#cce8cf;font-size:1rem;padding:9px 12px;outline:none;border-radius:5px 5px 0 0;transition:border-color .2s}
+.field input:focus{border-bottom-color:#34d058}
+.field input::placeholder{color:#264d2c;opacity:.8}
+.hint{font-size:.7rem;color:#34d058;min-height:17px;margin:6px 0 16px;font-style:italic}
+.row-btn{display:flex;gap:9px}
+#btn{flex:1;padding:13px;background:#1e8a2e;color:#fff;font-size:.9rem;font-weight:700;border:none;border-radius:9px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:background .2s}
+#btn:hover:not(:disabled){background:#25a838}
+#btn:disabled{opacity:.4;cursor:not-allowed}
+#btnC{padding:13px 16px;background:transparent;color:#4a2020;font-size:.82rem;border:1px solid #2e1010;border-radius:9px;cursor:pointer;display:none;transition:all .2s;white-space:nowrap}
+#btnC:hover{background:#200a0a;color:#e05252;border-color:#5a1010}
+.dot{width:7px;height:7px;border-radius:50%;background:#fff;display:none;animation:blink .9s infinite}
+#btn.busy .dot{display:block}
+@keyframes blink{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.15;transform:scale(.45)}}
+.pbar-wrap{margin-top:12px;background:#0a1a0b;border-radius:99px;height:5px;overflow:hidden}
+#pbar{height:100%;width:0%;background:linear-gradient(90deg,#1a6625,#34d058);border-radius:99px;transition:width .4s ease}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;padding:10px 12px;background:#080f08;border-radius:8px;border:1px solid #122012}
+@media(max-width:500px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{text-align:center}
+.stat-val{font-size:1.15rem;font-weight:800;color:#34d058;line-height:1}
+.stat-lbl{font-size:.6rem;color:#2e5e35;text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+.atual-box{margin-top:9px;padding:7px 11px;background:#080f08;border-radius:6px;border-left:2px solid #1a3d20;min-height:26px;display:none}
+.atual-box span{font-size:.74rem;color:#4a7d52;font-family:'Consolas',monospace}
+.atual-box span b{color:#7dcc88}
+#erro{display:none;margin-top:10px;font-size:.78rem;color:#e05252;text-align:center;padding:6px;background:#1a0808;border-radius:6px}
+#dl{display:none;margin-top:11px;text-align:center}
+#dl a{display:inline-block;background:#0d2e10;color:#34d058;border:1px solid #1a4d20;border-radius:8px;padding:9px 28px;font-size:.85rem;font-weight:700;text-decoration:none;transition:background .2s}
+#dl a:hover{background:#122515}
+.grid{display:grid;grid-template-columns:1fr 240px;gap:10px;width:100%;max-width:760px}
+@media(max-width:580px){.grid{grid-template-columns:1fr}}
+.panel{background:#0b1a0c;border:1px solid #163320;border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+.ph{padding:8px 14px;border-bottom:1px solid #122012;font-size:.6rem;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:#2e5e35;display:flex;align-items:center;justify-content:space-between}
+.ph button{background:none;border:none;color:#1a3a20;cursor:pointer;font-size:.65rem;transition:color .2s}
+.ph button:hover{color:#3d6644}
+#log{flex:1;padding:10px 12px;font-family:'Cascadia Code','Consolas',monospace;font-size:.69rem;background:#070e08;overflow-y:auto;min-height:170px;max-height:250px;line-height:1.7}
+.l-tel{color:#4dbb5a}
+.l-no{color:#2e5533}
+.l-sys{color:#1e8a2e;font-style:italic}
+#hist{flex:1;overflow-y:auto;max-height:250px}
+.hi{padding:9px 12px;border-bottom:1px solid #0f1f10;cursor:pointer;transition:background .15s}
+.hi:last-child{border:none}
+.hi:hover{background:#0d2010}
+.hi-c{font-size:.82rem;font-weight:600;color:#cce8cf}
+.hi-n{font-size:.7rem;color:#2e5e35;margin-top:1px}
+.hi-f{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.hi-d{font-size:.62rem;color:#1e3d22}
+.badge{font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:99px;text-transform:uppercase}
+.b-ok{background:#0b2e10;color:#34d058}
+.b-run{background:#122808;color:#86efac}
+.b-err{background:#2e0b0b;color:#f87171}
+.hi-empty{padding:20px;text-align:center;font-size:.74rem;color:#1a3320;font-style:italic}
+
+.report-btn{display:none;margin-top:8px;width:100%;padding:9px;background:transparent;color:#4a2020;font-size:.78rem;border:1px solid #2e1010;border-radius:8px;cursor:pointer;transition:all .2s}
+.report-btn:hover{background:#200a0a;color:#e05252;border-color:#5a1010}
+#reportModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+#reportModal.show{display:flex}
+.modal-box{background:#0b1a0c;border:1px solid #1a3d20;border-radius:12px;padding:24px;width:90%;max-width:440px}
+.modal-box h3{color:#34d058;font-size:1rem;margin-bottom:12px}
+.modal-box textarea{width:100%;background:#070e08;border:1px solid #163320;color:#cce8cf;border-radius:6px;padding:10px;font-size:.82rem;resize:vertical;min-height:80px;outline:none;font-family:inherit}
+.modal-btns{display:flex;gap:8px;margin-top:12px}
+.modal-btns button{flex:1;padding:10px;border-radius:8px;border:none;cursor:pointer;font-size:.82rem;font-weight:600}
+#btnEnviarReport{background:#1e8a2e;color:#fff}
+#btnCancelarReport{background:#122012;color:#3d6644}
+#reportStatus{font-size:.75rem;margin-top:8px;text-align:center;min-height:16px}
+
+footer{margin-top:22px;font-size:.62rem;color:#122012;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <svg width="34" height="34" viewBox="0 0 48 48">
+    <polygon points="24,2 44,13 44,35 24,46 4,35 4,13" fill="#1e8a2e" stroke="#34d058" stroke-width="1.5"/>
+    <polyline points="12,36 12,16 24,26 36,16 36,36" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+  <div><h1>MCLeadProspecta</h1><p>Memocash Solucoes</p></div>
+  <div class="hdr-sp"></div>
+  <a class="gh" href="https://github.com/laossim" target="_blank">@laossim</a>
+</div>
+<div class="sep"></div>
+
+<div class="card">
+  <div class="fields">
+    <div class="field">
+      <label>Cidade</label>
+      <input id="iC" type="text" placeholder="ex: Sao Paulo, Curitiba" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Nicho</label>
+      <input id="iN" type="text" placeholder="ex: pizzaria, barbearia" autocomplete="off">
+    </div>
+  </div>
+  <div class="hint" id="hint"></div>
+
+  <div class="row-btn">
+    <button id="btn" onclick="iniciar()">
+      <span class="dot"></span>
+      <span id="btnTxt">Gerar Leads</span>
+    </button>
+    <button id="btnC" onclick="cancelar()">Cancelar</button>
+  </div>
+
+  <div class="pbar-wrap"><div id="pbar"></div></div>
+
+  <div class="stats" id="statsBar" style="display:none">
+    <div class="stat"><div class="stat-val" id="sTotal">0</div><div class="stat-lbl">Leads</div></div>
+    <div class="stat"><div class="stat-val" id="sTel">0</div><div class="stat-lbl">Com Telefone</div></div>
+    <div class="stat"><div class="stat-val" id="sRate">-</div><div class="stat-lbl">Leads / min</div></div>
+    <div class="stat"><div class="stat-val" id="sEta">-</div><div class="stat-lbl">Tempo restante</div></div>
+  </div>
+
+  <div class="atual-box" id="atualBox">
+    <span>&#8594; <b id="atualTxt">...</b></span>
+  </div>
+
+  <div id="erro"></div>
+  <div id="dl"><a id="dlLink" href="#">Baixar Planilha</a></div>
+  <button class="report-btn" id="reportBtn" onclick="abrirReport()">Reportar problema</button>
+</div>
+
+<div class="grid">
+  <div class="panel">
+    <div class="ph">Log em tempo real</div>
+    <div id="log"><span class="l-sys">Aguardando...</span></div>
+  </div>
+  <div class="panel">
+    <div class="ph">Historico <button onclick="limpar()">limpar</button></div>
+    <div id="hist"><div class="hi-empty">nenhuma busca ainda</div></div>
+  </div>
+</div>
+
+<footer>MCLeadProspecta &middot; Memocash Solucoes &middot; github.com/laossim</footer>
+
+<script>
+let jobId=null,poll=null,logLines=[],lastLogLen=0;
+let hist=JSON.parse(localStorage.getItem('mch')||'[]');
+
+document.getElementById('iC').addEventListener('keydown',e=>{
+  if(e.key==='Enter'||e.key==='Tab'){e.preventDefault();document.getElementById('iN').focus()}
+});
+document.getElementById('iN').addEventListener('keydown',e=>{
+  if(e.key==='Enter'){e.preventDefault();iniciar()}
+});
+
+async function corrigir(){
+  const c=document.getElementById('iC').value.trim();
+  const n=document.getElementById('iN').value.trim();
+  if(!c&&!n)return;
+  try{
+    const r=await fetch('/corrigir',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cidade:c,nicho:n})});
+    const d=await r.json();
+    const msgs=[];
+    if(d.cidade!==c){document.getElementById('iC').value=d.cidade;msgs.push(d.cidade)}
+    if(d.nicho!==n){document.getElementById('iN').value=d.nicho;msgs.push(d.nicho)}
+    document.getElementById('hint').textContent=msgs.length?'Corrigido: '+msgs.join(' / '):'';
+  }catch(e){}
+}
+document.getElementById('iC').addEventListener('blur',corrigir);
+document.getElementById('iN').addEventListener('blur',corrigir);
+
+async function iniciar(){
+  const c=document.getElementById('iC').value.trim();
+  const n=document.getElementById('iN').value.trim();
+  if(!c||!n){setErro('Preencha cidade e nicho.');return}
+  await corrigir();
+  const cf=document.getElementById('iC').value.trim();
+  const nf=document.getElementById('iN').value.trim();
+  setBusy(true);resetUI();setErro('');setDl(false);setProg(0);
+  addLog('Iniciando...','sys');
+  try{
+    const r=await fetch('/iniciar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cidade:cf,nicho:nf})});
+    const d=await r.json();
+    if(d.erro){setErro(d.erro);setBusy(false);return}
+    jobId=d.job_id;
+    addHist(cf,nf,jobId);
+    poll=setInterval(polling,1500);
+  }catch(e){setErro('Erro de conexao.');setBusy(false)}
+}
+
+async function cancelar(){
+  if(!jobId)return;
+  try{await fetch('/cancelar/'+jobId,{method:'POST'})}catch(e){}
+  clearInterval(poll);setBusy(false);addLog('Cancelado.','sys');
+}
+
+function addLog(txt,tipo){
+  logLines.push({txt,tipo});
+  if(logLines.length>60)logLines.shift();
+  const el=document.getElementById('log');
+  el.innerHTML=logLines.map(l=>{
+    const cls=l.tipo==='sys'?'l-sys':l.txt.includes('[tel]')?'l-tel':'l-no';
+    return '<span class="'+cls+'">'+l.txt.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</span>';
+  }).join('\n');
+  el.scrollTop=el.scrollHeight;
+}
+
+async function polling(){
+  if(!jobId)return;
+  try{
+    const r=await fetch('/status/'+jobId);
+    const d=await r.json();
+    if(d.log&&d.log.length>lastLogLen){
+      d.log.slice(lastLogLen).forEach(l=>addLog(l,l.includes('[tel]')?'tel':l.startsWith('[')?'no':'sys'));
+      lastLogLen=d.log.length;
+    }
+    if(d.progress)setProg(d.progress);
+    if(d.total>0){
+      document.getElementById('statsBar').style.display='grid';
+      document.getElementById('atualBox').style.display='block';
+      document.getElementById('sTotal').textContent=d.coletados||0;
+      document.getElementById('sTel').textContent=d.com_telefone||0;
+      document.getElementById('sRate').textContent=d.rate>0?d.rate.toFixed(1):'-';
+      if(d.eta>0){
+        const m=Math.floor(d.eta/60),s=d.eta%60;
+        document.getElementById('sEta').textContent=m>0?m+'m '+s+'s':s+'s';
+      }
+      if(d.atual)document.getElementById('atualTxt').textContent=d.atual;
+    }
+    if(d.status==='concluido'){
+      clearInterval(poll);setBusy(false);setProg(100);setDl(true,jobId);
+      updHist(jobId,'ok');renderHist();addLog('Planilha pronta!','sys');
+    }
+    if(d.status==='erro'){
+      clearInterval(poll);setBusy(false);
+      if(d.tem_parcial){setDl(true,jobId);addLog('Resultado parcial disponivel.','sys')}
+      else setErro('Erro durante a coleta.');
+      document.getElementById('reportBtn').style.display='block';
+      updHist(jobId,'err');renderHist();
+    }
+  }catch(e){}
+}
+
+function abrirReport(){
+  document.getElementById('reportModal').classList.add('show');
+  document.getElementById('reportStatus').textContent='';
+  document.getElementById('reportMsg').value='';
+}
+function fecharReport(){
+  document.getElementById('reportModal').classList.remove('show');
+}
+async function enviarReport(){
+  const msg=document.getElementById('reportMsg').value.trim();
+  const logTxt=logLines.map(l=>l.txt).join('\n');
+  const st=document.getElementById('reportStatus');
+  st.textContent='Enviando...';st.style.color='#7dcc88';
+  try{
+    const r=await fetch('/reportar',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({mensagem:msg,log:logTxt})});
+    const d=await r.json();
+    if(d.ok){st.textContent='Enviado! Obrigado.';setTimeout(fecharReport,2000)}
+    else st.style.color='#e05252',st.textContent='Erro: '+d.erro;
+  }catch(e){st.style.color='#e05252';st.textContent='Falha ao enviar.';}
+}
+
+
+function setBusy(v){
+  const b=document.getElementById('btn');
+  document.getElementById('btnTxt').textContent=v?'Processando...':'Gerar Leads';
+  b.disabled=v;b.classList.toggle('busy',v);
+  document.getElementById('btnC').style.display=v?'flex':'none';
+}
+function resetUI(){
+  logLines=[];lastLogLen=0;
+  document.getElementById('log').innerHTML='';
+  document.getElementById('statsBar').style.display='none';
+  document.getElementById('atualBox').style.display='none';
+  ['sTotal','sTel','sRate','sEta'].forEach(id=>document.getElementById(id).textContent='-');
+}
+function setProg(v){document.getElementById('pbar').style.width=v+'%'}
+function setErro(m){const el=document.getElementById('erro');el.textContent=m;el.style.display=m?'block':'none'}
+function setDl(v,jid){
+  document.getElementById('dl').style.display=v?'block':'none';
+  if(jid)document.getElementById('dlLink').href='/download/'+jid;
+}
+function addHist(c,n,jid){
+  hist=hist.filter(h=>!(h.c===c&&h.n===n));
+  hist.unshift({c,n,jid,s:'run',d:new Date().toLocaleDateString('pt-BR')});
+  if(hist.length>20)hist.pop();
+  localStorage.setItem('mch',JSON.stringify(hist));renderHist();
+}
+function updHist(jid,s){
+  const h=hist.find(x=>x.jid===jid);
+  if(h){h.s=s;localStorage.setItem('mch',JSON.stringify(hist))}
+}
+function limpar(){hist=[];localStorage.setItem('mch','[]');renderHist()}
+function renderHist(){
+  const el=document.getElementById('hist');
+  if(!hist.length){el.innerHTML='<div class="hi-empty">nenhuma busca ainda</div>';return}
+  el.innerHTML=hist.map(h=>`
+    <div class="hi" onclick="preencher('${h.c}','${h.n}')">
+      <div class="hi-c">${h.c}</div><div class="hi-n">${h.n}</div>
+      <div class="hi-f"><span class="hi-d">${h.d||''}</span>
+      <span class="badge ${h.s==='ok'?'b-ok':h.s==='err'?'b-err':'b-run'}">${h.s==='ok'?'ok':h.s==='err'?'erro':'rodando'}</span>
+      </div></div>`).join('');
+}
+function preencher(c,n){
+  document.getElementById('iC').value=c;document.getElementById('iN').value=n;
+  document.getElementById('hint').textContent='';
+}
+renderHist();
+</script>
+
+<div id="reportModal">
+  <div class="modal-box">
+    <h3>Reportar Problema</h3>
+    <p style="font-size:.78rem;color:#3d6644;margin-bottom:10px">Descreva o que aconteceu e o log sera enviado automaticamente.</p>
+    <textarea id="reportMsg" placeholder="ex: A busca travou na metade, mostrou erro X..."></textarea>
+    <div class="modal-btns">
+      <button id="btnCancelarReport" onclick="fecharReport()">Cancelar</button>
+      <button id="btnEnviarReport" onclick="enviarReport()">Enviar Reporte</button>
+    </div>
+    <div id="reportStatus"></div>
+  </div>
+</div>
+
+</body>
+</html>
