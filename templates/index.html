@@ -24,6 +24,7 @@
   --sep:linear-gradient(90deg,transparent,#163320,transparent);
   --theme-icon:☀️;
   --shadow:0 2px 16px rgba(0,0,0,.5);
+  --dot:rgba(52,208,88,.06);
 }
 [data-theme="light"] {
   --bg:#f0f7f0;--surface:#ffffff;--border:#c8e6c9;
@@ -43,18 +44,19 @@
   --sep:linear-gradient(90deg,transparent,#c8e6c9,transparent);
   --theme-icon:🌙;
   --shadow:0 2px 16px rgba(0,0,0,.1);
+  --dot:rgba(30,138,46,.07);
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:26px 14px 56px;transition:background .3s,color .3s}
+body{background:var(--bg);color:var(--text);
+background-image:radial-gradient(var(--dot) 1.2px,transparent 1.2px);
+background-size:22px 22px;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:26px 14px 56px;transition:background .3s,color .3s}
 
 .hdr{width:100%;max-width:760px;display:flex;align-items:center;gap:11px;margin-bottom:10px}
 .hdr h1{font-size:1.5rem;font-weight:800;color:var(--green-hi);letter-spacing:-.5px;line-height:1}
 .hdr p{font-size:.72rem;color:var(--muted);margin-top:2px}
 .hdr-sp{flex:1}
 .hdr-right{display:flex;align-items:center;gap:12px}
-.gh{font-size:.67rem;color:var(--muted2);text-decoration:none;transition:color .2s}
-.gh:hover{color:var(--muted)}
 #themeBtn{background:none;border:1px solid var(--border);border-radius:8px;padding:4px 8px;cursor:pointer;font-size:.85rem;transition:all .2s;color:var(--muted)}
 #themeBtn:hover{border-color:var(--green);background:var(--green-dim)}
 
@@ -142,21 +144,19 @@ body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,san
 #btnFechar{background:var(--input-bg);color:var(--muted)}
 #reportSt{font-size:.74rem;margin-top:8px;text-align:center;min-height:16px}
 
-footer{margin-top:22px;font-size:.62rem;color:var(--muted2);text-align:center}
+footer{margin-top:22px;text-align:center}
+#ghLink{color:var(--muted2);display:inline-block;transition:color .2s,transform .2s}
+#ghLink:hover{color:var(--green-hi);transform:scale(1.15)}
 </style>
 </head>
 <body>
 
 <div class="hdr">
-  <svg width="34" height="34" viewBox="0 0 48 48">
-    <polygon points="24,2 44,13 44,35 24,46 4,35 4,13" fill="#1e8a2e" stroke="#34d058" stroke-width="1.5"/>
-    <polyline points="12,36 12,16 24,26 36,16 36,36" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  </svg>
+
   <div><h1>MCLeadProspecta</h1><p>Memocash Solucoes</p></div>
   <div class="hdr-sp"></div>
   <div class="hdr-right">
     <button id="themeBtn" onclick="toggleTheme()" title="Alternar tema">☀️</button>
-    <a class="gh" href="https://github.com/laossim" target="_blank">@laossim</a>
   </div>
 </div>
 <div class="sep"></div>
@@ -213,7 +213,13 @@ footer{margin-top:22px;font-size:.62rem;color:var(--muted2);text-align:center}
   </div>
 </div>
 
-<footer>MCLeadProspecta &middot; Memocash Solucoes &middot; github.com/laossim</footer>
+<footer>
+  <a href="https://github.com/laossim" target="_blank" rel="noopener" id="ghLink" title="@laossim no GitHub">
+    <svg viewBox="0 0 16 16" width="28" height="28" fill="currentColor" aria-label="GitHub">
+      <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+    </svg>
+  </a>
+</footer>
 
 <!-- Modal de reporte -->
 <div id="reportModal">
