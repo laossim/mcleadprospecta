@@ -50,9 +50,9 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:var(--text);
 background-image:radial-gradient(var(--dot) 1.2px,transparent 1.2px);
-background-size:22px 22px;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:26px 14px 56px;transition:background .3s,color .3s}
+background-size:22px 22px;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 20px 48px;transition:background .3s,color .3s}
 
-.hdr{width:100%;max-width:760px;display:flex;align-items:center;gap:11px;margin-bottom:10px}
+.hdr{width:100%;max-width:1060px;display:flex;align-items:center;gap:11px;margin-bottom:10px}
 .hdr h1{font-size:1.5rem;font-weight:800;color:var(--green-hi);letter-spacing:-.5px;line-height:1}
 .hdr p{font-size:.72rem;color:var(--muted);margin-top:2px}
 .hdr-sp{flex:1}
@@ -60,8 +60,8 @@ background-size:22px 22px;font-family:'Segoe UI',system-ui,sans-serif;min-height
 #themeBtn{background:none;border:1px solid var(--border);border-radius:8px;padding:4px 8px;cursor:pointer;font-size:.85rem;transition:all .2s;color:var(--muted)}
 #themeBtn:hover{border-color:var(--green);background:var(--green-dim)}
 
-.sep{width:100%;max-width:760px;height:1px;background:var(--sep);margin:12px 0 22px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px 24px 20px;width:100%;max-width:760px;margin-bottom:10px;transition:background .3s,border-color .3s;box-shadow:var(--shadow)}
+.sep{width:100%;max-width:1060px;height:1px;background:var(--sep);margin:12px 0 22px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px 24px 20px;width:100%;max-width:1060px;margin-bottom:10px;transition:background .3s,border-color .3s;box-shadow:var(--shadow)}
 
 .fields{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:5px}
 @media(max-width:500px){.fields{grid-template-columns:1fr}}
@@ -104,19 +104,19 @@ background-size:22px 22px;font-family:'Segoe UI',system-ui,sans-serif;min-height
 .report-link{font-size:.72rem;color:var(--report-link);background:none;border:none;cursor:pointer;text-decoration:underline;transition:color .2s;padding:0}
 .report-link:hover{color:var(--report-link-hover)}
 
-.grid{display:grid;grid-template-columns:1fr 240px;gap:10px;width:100%;max-width:760px}
+.grid{display:grid;grid-template-columns:1fr 240px;gap:10px;width:100%;max-width:1060px}
 @media(max-width:580px){.grid{grid-template-columns:1fr}}
 .panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;transition:background .3s;box-shadow:var(--shadow)}
 .ph{padding:8px 14px;border-bottom:1px solid var(--stat-border);font-size:.6rem;font-weight:700;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted2);display:flex;align-items:center;justify-content:space-between}
 .ph button{background:none;border:none;color:var(--muted2);cursor:pointer;font-size:.65rem;transition:color .2s}
 .ph button:hover{color:var(--muted)}
 
-#log{flex:1;padding:10px 12px;font-family:'Cascadia Code','Consolas',monospace;font-size:.69rem;background:var(--log-bg);overflow-y:auto;min-height:170px;max-height:250px;line-height:1.7;transition:background .3s}
+#log{flex:1;padding:10px 14px;font-family:'Cascadia Code','Consolas',monospace;font-size:.72rem;background:var(--log-bg);overflow-y:auto;min-height:200px;max-height:320px;line-height:1.75;transition:background .3s}
 .l-tel{color:var(--log-tel)}
 .l-no{color:var(--log-no)}
 .l-sys{color:var(--log-sys);font-style:italic}
 
-#hist{flex:1;overflow-y:auto;max-height:250px}
+#hist{flex:1;overflow-y:auto;max-height:320px}
 .hi{padding:9px 12px;border-bottom:1px solid var(--hi-border);cursor:pointer;transition:background .15s}
 .hi:last-child{border:none}
 .hi:hover{background:var(--hi-hover)}
@@ -153,7 +153,7 @@ footer{margin-top:22px;text-align:center}
 
 <div class="hdr">
 
-  <div><h1>MCLeadProspecta</h1><p>Memocash Solucoes</p></div>
+  <div><h1>MCLeadProspecta</h1></div>
   <div class="hdr-sp"></div>
   <div class="hdr-right">
     <button id="themeBtn" onclick="toggleTheme()" title="Alternar tema">☀️</button>
@@ -202,13 +202,16 @@ footer{margin-top:22px;text-align:center}
   </div>
 </div>
 
-<div class="grid">
-  <div class="panel">
-    <div class="ph">Log em tempo real</div>
+<div class="tabs-wrap">
+  <div class="tab-btns">
+    <button class="tab-btn active" onclick="switchTab('log',this)">Log em Tempo Real</button>
+    <button class="tab-btn" onclick="switchTab('hist',this)">Historico</button>
+  </div>
+  <div class="tab-pane active" id="tab-log">
     <div id="log"><span class="l-sys">Aguardando...</span></div>
   </div>
-  <div class="panel">
-    <div class="ph">Historico <button onclick="limpar()">limpar</button></div>
+  <div class="tab-pane" id="tab-hist">
+    <div class="ph"><button onclick="limpar()">limpar</button></div>
     <div id="hist"><div class="hi-empty">nenhuma busca ainda</div></div>
   </div>
 </div>
@@ -439,6 +442,13 @@ document.getElementById('reportModal').addEventListener('click', function(e) {
 });
 
 renderHist();
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  btn.classList.add('active');
+}
 </script>
 </body>
 </html>
