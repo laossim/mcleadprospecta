@@ -434,7 +434,10 @@ def worker(job_id, cidade, nicho):
                 det=extrair_detalhes(pg2,est["url"])
                 r={"nome":est["nome"],"url":est["url"],
                    "telefone":det["telefone"],"whatsapp":det["whatsapp"],"endereco":det["endereco"]}
+                r["hora"] = datetime.now().strftime("%d/%m/%y %H:%M")
                 resultados.append(r)
+                with JOBS_LOCK:
+                    JOBS[job_id]["resultados"].append(r)
 
                 com_tel=sum(1 for x in resultados if x["telefone"])
                 elapsed=time.time()-t_ini
@@ -492,6 +495,7 @@ def rota_iniciar():
                    "file_path":None,"file_name":None,"file_path_parcial":None,
                    "total":0,"coletados":0,"com_telefone":0,
                    "atual":"","rate":0,"eta":0,"cancelado":False,
+                   "resultados":[],
                    "cidade":cidade,"nicho":nicho,"criado_em":datetime.now().isoformat()}
     threading.Thread(target=worker,args=(jid,cidade,nicho),daemon=True).start()
     return jsonify({"job_id":jid,"cidade":cidade,"nicho":nicho})
@@ -504,13 +508,17 @@ def rota_cancelar(jid):
 
 @app.route("/status/<jid>")
 def rota_status(jid):
+    from_idx = int(request.args.get("from", 0))
     with JOBS_LOCK: job=JOBS.get(jid)
     if not job: return jsonify({"erro":"nao encontrado"}),404
+    res = job.get("resultados",[])
     return jsonify({"status":job["status"],"progress":job["progress"],
                     "log":job["log"][-40:],"total":job["total"],
                     "coletados":job.get("coletados",0),"com_telefone":job.get("com_telefone",0),
                     "atual":job.get("atual",""),"rate":job.get("rate",0),"eta":job.get("eta",0),
-                    "file_name":job.get("file_name"),"tem_parcial":job.get("file_path_parcial") is not None})
+                    "file_name":job.get("file_name"),"tem_parcial":job.get("file_path_parcial") is not None,
+                    "novos_resultados": res[from_idx:],
+                    "total_resultados": len(res)})
 
 @app.route("/download/<jid>")
 def rota_download(jid):
