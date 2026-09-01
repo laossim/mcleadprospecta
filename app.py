@@ -1,6 +1,7 @@
 # MCLeadProspecta Web - Memocash Solucoes - github.com/laossim
 
 import os, re, time, uuid, threading, unicodedata, urllib.request as _url
+import difflib
 from datetime import date, datetime
 from flask import Flask, render_template, request, jsonify, send_file
 
@@ -23,44 +24,182 @@ CTX_ARGS = dict(
 def normalizar(t):
     return unicodedata.normalize("NFKD",t).encode("ASCII","ignore").decode().lower().strip()
 
+# ── CORREÇÃO APRIMORADA ───────────────────────────────────────────────────────
+
 CORRECOES = {
-    "hamburguer":"hamburguer","hamburger":"hamburguer",
-    "pizaria":"pizzaria","pizzeria":"pizzaria",
-    "padaraia":"padaria","paderia":"padaria",
-    "farmacia":"farmacia","farrmacia":"farmacia","acadmia":"academia",
-    "mecanica":"mecanica","mecanico":"mecanico",
-    "odontolgia":"odontologia","adovgado":"advogado",
-    "contabilidde":"contabilidade","restarante":"restaurante","restrurante":"restaurante",
-    "supermecado":"supermercado","barberia":"barbearia","barbaria":"barbearia",
-    "estetica":"estetica","esthetica":"estetica",
-    "petshop":"pet shop","pet shopt":"pet shop",
-    "consulotrio":"consultorio","clinika":"clinica","clincia":"clinica",
-    "sorvetaria":"sorveteria","lanchinete":"lanchonete",
-    "mrecado":"mercado","ofcina":"oficina","eletrica":"eletrica","hidraulica":"hidraulica",
-    "imobilaria":"imobiliaria","hotal":"hotel","hotell":"hotel","pousadda":"pousada",
-    "sao paulo":"Sao Paulo","san paulo":"Sao Paulo",
-    "rio de janerio":"Rio de Janeiro","rio de janiero":"Rio de Janeiro",
-    "belo orizonte":"Belo Horizonte","curitba":"Curitiba","curtiba":"Curitiba",
-    "forteleza":"Fortaleza","salvaldor":"Salvador","slavador":"Salvador",
-    "manuas":"Manaus","manaos":"Manaus","recfie":"Recife","reciife":"Recife",
-    "poro alegre":"Porto Alegre","goainia":"Goiania","goinia":"Goiania",
-    "camppinas":"Campinas","campinnas":"Campinas",
-    "brasilia":"Brasilia","brazilia":"Brasilia","florianpolis":"Florianopolis",
-    "vittoria":"Vitoria","macapa":"Macapa","belem":"Belem","bellem":"Belem",
-    "treresina":"Teresina","natel":"Natal","maceio":"Maceio",
-    "joao pessoa":"Joao Pessoa","poto velho":"Porto Velho","palmaz":"Palmas",
-    "campo grand":"Campo Grande","cuiaba":"Cuiaba",
-    "uberlandia":"Uberlandia","uberlania":"Uberlandia","sorocba":"Sorocaba",
-    "sanots":"Santos","guaruhos":"Guarulhos","ozasco":"Osasco",
-    "joinvile":"Joinville","londrinna":"Londrina","maringa":"Maringa",
-    "juiz de forra":"Juiz de Fora","niteroi":"Niteroi","nitroi":"Niteroi",
-    "nova iguacu":"Nova Iguacu",
+    # Nichos
+    "hamburguer":"hamburguer","hamburger":"hamburguer","hamburgeria":"hamburgueria",
+    "pizaria":"pizzaria","pizzeria":"pizzaria","pizzara":"pizzaria",
+    "padaraia":"padaria","paderia":"padaria","pandaria":"padaria",
+    "farmacia":"farmacia","farrmacia":"farmacia","farmasia":"farmacia",
+    "acadmia":"academia","academai":"academia","adademia":"academia",
+    "mecanica":"mecanica","mecanico":"mecanico","mecanika":"mecanica",
+    "odontolgia":"odontologia","odontologya":"odontologia",
+    "adovgado":"advogado","advogato":"advogado",
+    "contabilidde":"contabilidade","contabiliade":"contabilidade",
+    "restarante":"restaurante","restrurante":"restaurante","restaurente":"restaurante",
+    "supermecado":"supermercado","supermecardo":"supermercado",
+    "barberia":"barbearia","barbaria":"barbearia","barbiraria":"barbearia",
+    "estetica":"estetica","esthetica":"estetica","estetica":"estetica",
+    "petshop":"pet shop","pet shopt":"pet shop","petchop":"pet shop",
+    "consulotrio":"consultorio","consultori":"consultorio",
+    "clinika":"clinica","clincia":"clinica","klinica":"clinica",
+    "sorvetaria":"sorveteria","sorvetaria":"sorveteria",
+    "lanchinete":"lanchonete","lanchomete":"lanchonete",
+    "mrecado":"mercado","ofcina":"oficina",
+    "eletrica":"eletrica","hidraulica":"hidraulica",
+    "imobilaria":"imobiliaria","hotal":"hotel","hotell":"hotel",
+    "pousadda":"pousada","pusada":"pousada",
+    "ballett":"ballet","balley":"ballet","bale":"ballet","balet":"ballet",
+    "pilats":"pilates","pilate":"pilates",
+    "ioga":"yoga","iogue":"yoga",
+    "crossfite":"crossfit","crosfit":"crossfit",
+    "salgadaria":"salgaderia","salgadaria":"salgaderia",
+    "sorvete":"sorveteria","sorvetes":"sorveteria",
+    "manicure":"manicure","manicuri":"manicure","manicuri":"manicure",
+    "cabeleireiro":"cabeleireiro","cabeleiriro":"cabeleireiro",
+    "fotografo":"fotografo","fotgrafo":"fotografo",
+    "arquiteto":"arquiteto","arquiteto":"arquiteto",
+    "engenheiro":"engenheiro","engenhero":"engenheiro",
+    "psicologia":"psicologia","psicologya":"psicologia",
+    "fisioterapia":"fisioterapia","fisioterapya":"fisioterapia",
+    "nutricionista":"nutricionista","nutriscionista":"nutricionista",
+    "personal":"personal trainer","personall":"personal trainer",
+    "muay thai":"muay thai","muaythai":"muay thai","muay-thai":"muay thai",
+    "jiu jitsu":"jiu-jitsu","jiujitsu":"jiu-jitsu","jiu-jitso":"jiu-jitsu",
+    "karate":"karate","carate":"karate",
+    "natacao":"natacao","natassao":"natacao",
+    "ginastica":"ginastica","gimnastica":"ginastica",
+    "dansa":"danca","danssa":"danca",
+    "ballet classico":"ballet classico","balé classico":"ballet classico",
+    # Cidades
+    "sao paulo":"Sao Paulo","san paulo":"Sao Paulo","saõ paulo":"Sao Paulo",
+    "rio de janerio":"Rio de Janeiro","rio de janiero":"Rio de Janeiro","riodejaneiro":"Rio de Janeiro",
+    "belo orizonte":"Belo Horizonte","bello horizonte":"Belo Horizonte",
+    "curitba":"Curitiba","curtiba":"Curitiba","curitibba":"Curitiba",
+    "forteleza":"Fortaleza","fortalleza":"Fortaleza",
+    "salvaldor":"Salvador","slavador":"Salvador",
+    "manuas":"Manaus","manaos":"Manaus","manus":"Manaus",
+    "recfie":"Recife","reciife":"Recife","reciffe":"Recife",
+    "poro alegre":"Porto Alegre","porto alegri":"Porto Alegre",
+    "goainia":"Goiania","goinia":"Goiania","goiania":"Goiania",
+    "camppinas":"Campinas","campinnas":"Campinas","campinhas":"Campinas",
+    "brasilia":"Brasilia","brazilia":"Brasilia","brazília":"Brasilia",
+    "florianpolis":"Florianopolis","florianopollis":"Florianopolis",
+    "vittoria":"Vitoria","vitoria":"Vitoria",
+    "macapa":"Macapa","belem":"Belem","bellem":"Belem",
+    "treresina":"Teresina","teresinaa":"Teresina",
+    "natel":"Natal","natall":"Natal",
+    "maceio":"Maceio","maceioo":"Maceio",
+    "joao pessoa":"Joao Pessoa","joaopessoa":"Joao Pessoa",
+    "poto velho":"Porto Velho","porto veljo":"Porto Velho",
+    "palmaz":"Palmas","palmax":"Palmas",
+    "campo grand":"Campo Grande","campo grandi":"Campo Grande",
+    "cuiaba":"Cuiaba","cuiabba":"Cuiaba",
+    "ribeirao preto":"Ribeirao Preto","riberao preto":"Ribeirao Preto",
+    "uberlandia":"Uberlandia","uberlania":"Uberlandia",
+    "sorocba":"Sorocaba","sorocabba":"Sorocaba",
+    "sao jose dos campos":"Sao Jose dos Campos",
+    "guaruhos":"Guarulhos","guaruhos":"Guarulhos",
+    "joinvile":"Joinville","joinvilli":"Joinville",
+    "londrinna":"Londrina","londrina":"Londrina",
+    "maringa":"Maringa","maringga":"Maringa",
+    "juiz de forra":"Juiz de Fora","juizde fora":"Juiz de Fora",
+    "niteroi":"Niteroi","niterõi":"Niteroi",
+    "nova iguacu":"Nova Iguacu","nova iguassu":"Nova Iguacu",
+    "itabira":"Itabira","itabirra":"Itabira",
+    "betim":"Betim","contagem":"Contagem","ipatinga":"Ipatinga",
 }
 
 def corrigir(texto):
-    c = normalizar(texto)
-    if c in CORRECOES: return CORRECOES[c]
-    return " ".join(CORRECOES.get(normalizar(t),t) for t in texto.strip().split())
+    texto = texto.strip()
+    chave = normalizar(texto)
+    if chave in CORRECOES:
+        return CORRECOES[chave]
+
+    # Tenta por similaridade (difflib) — captura erros de digitacao nao mapeados
+    matches = difflib.get_close_matches(chave, CORRECOES.keys(), n=1, cutoff=0.85)
+    if matches:
+        return CORRECOES[matches[0]]
+
+    # Corrige palavra por palavra para frases compostas
+    palavras = texto.strip().split()
+    resultado = []
+    for p in palavras:
+        pn = normalizar(p)
+        if pn in CORRECOES:
+            resultado.append(CORRECOES[pn])
+        else:
+            m = difflib.get_close_matches(pn, CORRECOES.keys(), n=1, cutoff=0.82)
+            resultado.append(CORRECOES[m[0]] if m else p)
+    return " ".join(resultado)
+
+# ── FILTRO DE RELEVÂNCIA ──────────────────────────────────────────────────────
+
+STOP_WORDS = {"de","da","do","em","e","a","o","as","os","para","com","um","uma",
+              "no","na","por","que","se","ao","aos","las","los","el","la"}
+
+SINONIMOS = {
+    "ballet":    ["ballet","bale","balet","danca","dance","studio","classico","royal"],
+    "pilates":   ["pilates","studio","pilat"],
+    "yoga":      ["yoga","yogi","studio","meditacao"],
+    "natacao":   ["natacao","piscina","aqua","swim","nadar"],
+    "danca":     ["danca","dance","ballet","samba","forro","ritmo","studio"],
+    "ginastica": ["ginastica","gym","fitness","academia"],
+    "academia":  ["academia","gym","fitness","crossfit","musculacao"],
+    "pizzaria":  ["pizza","pizzaria","pizzeria","napolitana"],
+    "barbearia": ["barber","barbearia","cabelo","corte","navalha"],
+    "padaria":   ["padaria","bakery","paes","pao","confeitaria"],
+    "farmacia":  ["farmacia","drogaria","remedio","medicamento"],
+    "dentista":  ["dentista","odonto","dental","clinica","ortodontia"],
+    "medico":    ["medico","clinica","saude","health","consultorio"],
+    "advogado":  ["advogado","advocacia","juridico","direito","escritorio"],
+    "contabilidade":["contabilidade","contabil","contador","fiscal"],
+    "hotel":     ["hotel","pousada","hostel","inn","resort"],
+    "restaurante":["restaurante","bistro","cozinha","food"],
+    "petshop":   ["pet","animal","veterinaria","vet","patas"],
+    "estetica":  ["estetica","beleza","beauty","spa","depilacao"],
+    "salao":     ["salao","beleza","beauty","cabeleireiro","hair"],
+    "sorveteria":["sorvete","sorveteria","gelato","ice cream","acai"],
+    "lanchonete":["lanchonete","lanche","sanduiche","hamburguer","fast"],
+    "mercado":   ["mercado","supermercado","mercearia","minimercado"],
+    "mecanica":  ["mecanica","oficina","auto","carro","veiculo","motor"],
+    "muay":      ["muay","thai","luta","arte marcial","esporte"],
+    "jiu":       ["jiu","jitsu","luta","arte marcial","grappling"],
+    "karate":    ["karate","luta","arte marcial","dojo"],
+    "crossfit":  ["crossfit","functional","fitness","treino"],
+    "personal":  ["personal","trainer","treino","fitness"],
+}
+
+def filtrar_relevantes(estabs, nicho):
+    if not estabs:
+        return estabs
+
+    kws = [w for w in normalizar(nicho).split() if w not in STOP_WORDS and len(w) > 2]
+    if not kws:
+        return estabs
+
+    # Expande com sinonimos
+    expanded = set(kws)
+    for kw in kws:
+        if kw in SINONIMOS:
+            expanded.update(SINONIMOS[kw])
+        # Procura sinonimos por similaridade
+        for sk, sv in SINONIMOS.items():
+            if difflib.SequenceMatcher(None, kw, sk).ratio() > 0.8:
+                expanded.update(sv)
+
+    def relevante(nome):
+        n = normalizar(nome)
+        return any(kw in n for kw in expanded)
+
+    filtrados = [e for e in estabs if relevante(e["nome"])]
+
+    # Fallback: se filtrou mais de 60%, retorna tudo (nicho muito especifico)
+    if len(filtrados) < len(estabs) * 0.4 and len(estabs) > 4:
+        return estabs
+
+    return filtrados if filtrados else estabs
 
 def sanitizar(t):
     return re.sub(r"[^\w\s-]","",t).strip().replace(" ","_")
@@ -78,24 +217,20 @@ def gerar_whatsapp(tel):
 
 PADRAO_TEL = re.compile(r"(?:\+?55\s?)?(?:\(?\d{2}\)?[\s\-]?)(?:9\s?)?\d{4}[\s\-]?\d{4}")
 
-# ── EXTRAÇÃO SYNC (tudo na mesma thread — 100% seguro) ────────────────────────
+# ── EXTRAÇÃO ──────────────────────────────────────────────────────────────────
 
 def extrair_detalhes(page, url):
     dados = {"endereco":"","telefone":"","whatsapp":""}
     try:
         page.goto(url, timeout=10000, wait_until="domcontentloaded")
-
-        # Espera inteligente: aguarda botao de telefone aparecer (max 4s)
-        # Se aparecer antes, avança imediatamente — nao desperdiça tempo
         try:
             page.wait_for_selector(
                 "button[aria-label*='Telefone'], button[aria-label*='telefone'], button[aria-label*='Phone']",
                 timeout=4000
             )
         except Exception:
-            pass  # nao tem botao de telefone — tudo bem, continua
+            pass
 
-        # Tenta pelos botoes ARIA
         botoes = page.locator("button[aria-label]")
         cnt = botoes.count()
         for i in range(min(cnt,30)):
@@ -111,7 +246,6 @@ def extrair_detalhes(page, url):
                 pass
             if dados["endereco"] and dados["telefone"]: return dados
 
-        # Tenta pelas divs de info
         for cls in ("Io6YTe","rogA2c","AeaXub","LrzXr"):
             divs = page.locator("div."+cls)
             cnt = divs.count()
@@ -128,7 +262,6 @@ def extrair_detalhes(page, url):
                     pass
             if dados["endereco"] and dados["telefone"]: return dados
 
-        # Fallback regex
         try:
             corpo = page.inner_text("body")[:8000]
             if not dados["telefone"]:
@@ -192,10 +325,8 @@ def salvar_xlsx(resultados, cidade, nicho, tag=""):
             if col==5 and val.startswith("http"):
                 c.hyperlink=val; c.value="Maps"
                 c.font=Font(name="Arial",size=9,color="1e8a2e",underline="single")
-            if col==6:
-                c.font=Font(name="Arial",bold=True,size=9,color="1e8a2e")
-                c.alignment=Alignment(horizontal="center",vertical="center")
-            if col==8: c.alignment=Alignment(horizontal="center",vertical="center")
+            if col in(6,8): c.alignment=Alignment(horizontal="center",vertical="center")
+            if col==6: c.font=Font(name="Arial",bold=True,size=9,color="1e8a2e")
         ws.row_dimensions[lin].height=17
 
     total=len(resultados)+4
@@ -218,23 +349,19 @@ def salvar_xlsx(resultados, cidade, nicho, tag=""):
 
 # ── WORKER ────────────────────────────────────────────────────────────────────
 
-MAX_MIN = 25
-SCROLL_JS = "const f=document.querySelector(\"div[role='feed']\");if(f)f.scrollBy(0,2800);"
+MAX_MIN=25
+SCROLL_JS="const f=document.querySelector(\"div[role='feed']\");if(f)f.scrollBy(0,2800);"
 
 def worker(job_id, cidade, nicho):
-    inicio = time.time()
+    inicio=time.time()
 
     def log(msg):
         with JOBS_LOCK: JOBS[job_id]["log"].append(msg)
-
     def set_prog(v):
         with JOBS_LOCK: JOBS[job_id]["progress"]=v
-
     def set_stats(col,tel,atual,rate,eta):
         with JOBS_LOCK:
-            JOBS[job_id].update({"coletados":col,"com_telefone":tel,
-                                 "atual":atual,"rate":rate,"eta":eta})
-
+            JOBS[job_id].update({"coletados":col,"com_telefone":tel,"atual":atual,"rate":rate,"eta":eta})
     def deve_parar():
         with JOBS_LOCK: c=JOBS[job_id].get("cancelado",False)
         return c or (time.time()-inicio)>(MAX_MIN*60)
@@ -243,20 +370,17 @@ def worker(job_id, cidade, nicho):
         from playwright.sync_api import sync_playwright
     except ImportError:
         log("Playwright nao instalado.")
-        with JOBS_LOCK: JOBS[job_id]["status"]="erro"
-        return
+        with JOBS_LOCK: JOBS[job_id]["status"]="erro"; return
 
-    busca = nicho+" em "+cidade
+    busca=nicho+" em "+cidade
     log("Iniciando: "+busca)
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True,args=BROWSER_ARGS)
-            ctx = browser.new_context(**CTX_ARGS)
+            browser=p.chromium.launch(headless=True,args=BROWSER_ARGS)
+            ctx=browser.new_context(**CTX_ARGS)
 
-            # ── 1. Coleta a lista ──────────────────────────────────────────
-            pg = ctx.new_page()
-            pg.set_default_timeout(15000)
+            pg=ctx.new_page(); pg.set_default_timeout(15000)
             pg.goto("https://www.google.com/maps/search/"+busca.replace(" ","+"),
                     timeout=50000,wait_until="domcontentloaded")
 
@@ -274,8 +398,8 @@ def worker(job_id, cidade, nicho):
                 pg.wait_for_timeout(750)
                 if pg.locator("span:has-text('fim da lista')").count()>0: break
 
-            els = pg.locator("a[href*='/place/']")
-            vistos = set(); estabs=[]
+            els=pg.locator("a[href*='/place/']")
+            vistos=set(); estabs=[]
             for i in range(els.count()):
                 try:
                     el=els.nth(i)
@@ -290,21 +414,24 @@ def worker(job_id, cidade, nicho):
 
             pg.close()
 
+            # Aplica filtro de relevancia
+            antes=len(estabs)
+            estabs=filtrar_relevantes(estabs,nicho)
+            filtrados=antes-len(estabs)
             total=len(estabs)
-            log(str(total)+" locais. Coletando contatos...")
+            msg=str(total)+" locais"
+            if filtrados>0: msg+=" ("+str(filtrados)+" filtrados por relevancia)"
+            log(msg+". Coletando contatos...")
             with JOBS_LOCK: JOBS[job_id]["total"]=total
 
-            # ── 2. Coleta detalhes (sync, mesma thread) ───────────────────
-            pg2 = ctx.new_page()
-            pg2.set_default_timeout(12000)
-
+            pg2=ctx.new_page(); pg2.set_default_timeout(12000)
             resultados=[]; t_ini=time.time()
+
             for idx,est in enumerate(estabs,1):
                 if deve_parar():
-                    log("Parando. Salvando "+str(len(resultados))+" leads...")
-                    break
+                    log("Parando. Salvando "+str(len(resultados))+" leads..."); break
 
-                det = extrair_detalhes(pg2,est["url"])
+                det=extrair_detalhes(pg2,est["url"])
                 r={"nome":est["nome"],"url":est["url"],
                    "telefone":det["telefone"],"whatsapp":det["whatsapp"],"endereco":det["endereco"]}
                 resultados.append(r)
@@ -318,7 +445,6 @@ def worker(job_id, cidade, nicho):
                 set_prog(int(idx/total*100))
                 set_stats(idx,com_tel,est["nome"],rate,eta)
 
-                # Salva parcial a cada 20
                 if idx%20==0:
                     try:
                         cp,_=salvar_xlsx(resultados,cidade,nicho,"parcial"+str(idx))
@@ -337,9 +463,8 @@ def worker(job_id, cidade, nicho):
             log("Concluido - "+str(len(resultados))+" leads - "+str(com_tel)+" com telefone")
             with JOBS_LOCK:
                 JOBS[job_id].update({"status":"concluido","file_path":caminho,
-                                     "file_name":nome_arq,"progress":100,"com_telefone":com_tel,
-                                     "coletados":len(resultados)})
-
+                                     "file_name":nome_arq,"progress":100,
+                                     "com_telefone":com_tel,"coletados":len(resultados)})
     except Exception as e:
         log("Erro: "+str(e))
         with JOBS_LOCK: JOBS[job_id]["status"]="erro"
@@ -405,8 +530,8 @@ def rota_reportar():
     webhook=os.environ.get("DISCORD_WEBHOOK","")
     if not webhook: return jsonify({"ok":False,"erro":"Webhook nao configurado"}),400
     payload={"content":"**Reporte MCLeadProspecta**","embeds":[{
-        "title":"Erro reportado","color":0xe05252,
-        "description":"**Msg:** "+msg[:300]+"\n```"+log_txt[-800:]+"```"}]}
+        "title":"Erro reportado pelo usuario","color":0xe05252,
+        "description":"**Mensagem:** "+msg[:300]+"\n```"+log_txt[-800:]+"```"}]}
     try:
         req=_url.Request(webhook,data=_json.dumps(payload).encode(),
                          headers={"Content-Type":"application/json"},method="POST")
